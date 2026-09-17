@@ -1,5 +1,7 @@
 package com.restaurante.controller;
 
+import com.restaurante.exception.EstadoInvalidoException;
+import com.restaurante.exception.PedidoNotFoundException;
 import com.restaurante.exception.PlatoAlreadyExistsException;
 import com.restaurante.exception.PlatoNotFoundException;
 import com.restaurante.model.dto.response.ErrorResponseDTO;
@@ -99,6 +101,20 @@ public class GlobalExceptionHandler {
     }
 
     // ─── Helper: construye el ErrorResponseDTO ──────────────────────────
+
+        @ExceptionHandler(PedidoNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handlePedidoNotFound(
+            PedidoNotFoundException ex, HttpServletRequest request) {
+        log.warn("Pedido no encontrado: {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(EstadoInvalidoException.class)
+    public ResponseEntity<ErrorResponseDTO> handleEstadoInvalido(
+            EstadoInvalidoException ex, HttpServletRequest request) {
+        log.warn("Estado inválido: {}", ex.getMessage());
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
+}
 
     private ResponseEntity<ErrorResponseDTO> build(
             HttpStatus status, String message, HttpServletRequest request) {
