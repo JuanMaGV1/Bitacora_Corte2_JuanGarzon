@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: bitacora-restaurante
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /v1/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /v1/api-docs
+
+logging:
+  level:
+    root: INFO
+    com.restaurante: DEBUG
