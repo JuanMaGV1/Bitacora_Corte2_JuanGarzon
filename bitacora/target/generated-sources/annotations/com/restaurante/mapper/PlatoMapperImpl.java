@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-09-16T19:24:33-0500",
-    comments = "version: 1.6.2, compiler: Eclipse JDT (IDE) 3.46.100.v20260826-1225, environment: Java 21.0.12.1 (Eclipse Adoptium)"
+    date = "2026-09-16T19:26:39-0500",
+    comments = "version: 1.6.2, compiler: javac, environment: Java 24.0.2 (Oracle Corporation)"
 )
 @Component
 public class PlatoMapperImpl implements PlatoMapper {
@@ -24,10 +24,10 @@ public class PlatoMapperImpl implements PlatoMapper {
 
         Plato.PlatoBuilder plato = Plato.builder();
 
-        plato.categoria( dto.getCategoria() );
-        plato.descripcion( dto.getDescripcion() );
         plato.nombre( dto.getNombre() );
         plato.precio( dto.getPrecio() );
+        plato.categoria( dto.getCategoria() );
+        plato.descripcion( dto.getDescripcion() );
 
         plato.disponible( true );
 
@@ -42,12 +42,12 @@ public class PlatoMapperImpl implements PlatoMapper {
 
         PlatoResponseDTO.PlatoResponseDTOBuilder platoResponseDTO = PlatoResponseDTO.builder();
 
-        platoResponseDTO.categoria( plato.getCategoria() );
-        platoResponseDTO.descripcion( plato.getDescripcion() );
-        platoResponseDTO.disponible( plato.getDisponible() );
         platoResponseDTO.id( plato.getId() );
         platoResponseDTO.nombre( plato.getNombre() );
         platoResponseDTO.precio( plato.getPrecio() );
+        platoResponseDTO.categoria( plato.getCategoria() );
+        platoResponseDTO.descripcion( plato.getDescripcion() );
+        platoResponseDTO.disponible( plato.getDisponible() );
 
         return platoResponseDTO.build();
     }
