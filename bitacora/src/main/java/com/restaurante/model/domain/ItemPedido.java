@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Item de un pedido. Congela el precio del plato en el momento del pedido.
- * NO sigue el precio actual del plato.
+ * NO sigue el precio actual del plato (regla de Sakura).
  */
 @Data
 @Builder

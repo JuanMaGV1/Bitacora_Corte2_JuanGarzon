@@ -14,11 +14,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PedidoResponseDTO {
-    private Long                     id;
-    private Long                     idMesa;
+    private Long                        id;
+    private Long                        idMesa;
     private List<ItemPedidoResponseDTO> items;
-    private EstadoPedido             estado;
-    private LocalDateTime            timestamp;
-    private Double                   total;
-    private String                   notas;
+    private EstadoPedido                estado;
+    private LocalDateTime               timestamp;
+    private Double                      total;
+    private String                      notas;
 }

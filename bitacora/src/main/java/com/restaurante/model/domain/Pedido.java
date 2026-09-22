@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Pedido del restaurante. Contiene la lista de items.
+ * Pedido de Sakura Sushi. Contiene la lista de rolls/items.
  */
 @Data
 @Builder
@@ -25,7 +25,7 @@ public class Pedido {
     private LocalDateTime       timestamp;
     private String              notas;
 
-    /** Suma de todos los subtotales */
+    /** Total = suma de subtotales */
     public double calcularTotal() {
         if (items == null || items.isEmpty()) return 0.0;
         return items.stream()
@@ -33,8 +33,13 @@ public class Pedido {
                 .sum();
     }
 
-    /** Solo se puede modificar si está en RECIBIDO */
+    /** Solo se puede modificar si está en RECIBIDO (SS-02, SS-03, SS-04) */
     public boolean puedeModificarse() {
         return estado == EstadoPedido.RECIBIDO;
+    }
+
+    /** Cantidad de rolls/items — útil para SS-10 (tandas de 6) */
+    public int cantidadItems() {
+        return items == null ? 0 : items.size();
     }
 }

@@ -18,7 +18,7 @@ public class PedidoRequestDTO {
     @Positive(message = "El número de mesa debe ser mayor a 0")
     private Long idMesa;
 
-    @NotEmpty(message = "El pedido debe tener al menos un plato")
+    @NotEmpty(message = "El pedido debe tener al menos un roll")
     private List<@NotNull(message = "El id del plato no puede ser nulo") Long> idPlatos;
 
     @Size(max = 200, message = "Las notas no pueden superar 200 caracteres")

@@ -12,11 +12,9 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface PedidoMapper {
 
-    /** ItemPedido → ItemPedidoResponseDTO (con subtotal calculado) */
     @Mapping(target = "subtotal", expression = "java(item.subtotal())")
     ItemPedidoResponseDTO toItemResponse(ItemPedido item);
 
-    /** Pedido → PedidoResponseDTO */
     @Mapping(target = "items", source = "items")
     @Mapping(target = "total", expression = "java(pedido.calcularTotal())")
     PedidoResponseDTO toResponse(Pedido pedido);
