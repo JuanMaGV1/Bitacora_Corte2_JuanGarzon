@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ingredientes")
 @RequiredArgsConstructor
-@Tag(name = "Ingredientes", description = "Ingredientes disponibles para personalizar rolls (SS-09)")
+@Tag(name = "Ingredientes", description = "Ingredientes disponibles para personalizar rolls")
 public class IngredienteController {
 
     private final IngredienteService ingredienteService;
@@ -74,7 +74,7 @@ public class IngredienteController {
     }
 
     @PatchMapping("/{id}/disponible")
-    @Operation(summary = "Cambiar disponibilidad de un ingrediente (SS-RNF-06)")
+    @Operation(summary = "Cambiar disponibilidad de un ingrediente")
     public ResponseEntity<IngredienteResponseDTO> cambiarDisponibilidad(
             @PathVariable Long id,
             @RequestParam boolean disponible) {
