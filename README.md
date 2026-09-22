@@ -4,7 +4,7 @@
 Juan Garzón — DOSW Grupo 1
 
 ## Restaurante
-**FoodAPI** — Plataforma Web de Gestión Operativa para Restaurante
+**SakuraSushi** — Barra de sushi con preparación por lotes y rolls armados a pedido. 
 
 ## Descripción
 API REST que digitaliza la operación del restaurante: gestión de carta, pedidos, 
@@ -112,7 +112,6 @@ aún — todo en memoria con Streams.
 ### Diagrama de Clases (Dominio)
 ![Diagrama de Clases](/docs/diagrams/DiagramaClases.drawio.png)
 
-**Descripción:** Muestra las entidades puras del dominio con sus atributos y métodos de negocio. No incluye DTOs ni componentes de infraestructura.
 
 ## Evidencias
 
