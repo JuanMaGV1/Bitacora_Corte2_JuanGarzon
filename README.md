@@ -117,7 +117,7 @@ aún — todo en memoria con Streams.
 ## Evidencias
 
 ### Swagger UI — Todos los grupos
-![Swagger UI](/docs/images/Cobertura.png)
+![Swagger UI](/docs/images/Swagger.png)
 
 ### Cobertura JaCoCo
 ![Cobertura](/docs/images/Cobertura.png)
