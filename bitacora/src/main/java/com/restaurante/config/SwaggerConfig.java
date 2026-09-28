@@ -12,15 +12,20 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class SwaggerConfig {
-
     @Bean
     public OpenAPI restauranteOpenAPI() {
         return new OpenAPI().info(new Info()
-                .title("🍽️ API Restaurante — Bitácora")
-                .description("API REST del restaurante sin persistencia (en memoria)")
+                .title("Sakura Sushi — API REST")
+                .description("""
+                    API REST del restaurante japonés Sakura Sushi.
+
+                    Barra de sushi con preparación por lotes y rolls armados a pedido.
+
+                    Regla característica: los rolls se preparan en tandas de máximo 6 unidades.
+                    """)
                 .version("v1.0")
                 .contact(new Contact()
-                        .name("Equipo DOSW")
+                        .name("Juan Garzón — DOSW Grupo 1")
                         .email("dosw@eci.edu.co")));
     }
 }

@@ -204,4 +204,20 @@ public class GlobalExceptionHandler {
         log.warn("Cuenta no abierta: {}", ex.getMessage());
         return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
     }
+
+    @ExceptionHandler(com.restaurante.exception.TandaExcedidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleTandaExcedida(
+            com.restaurante.exception.TandaExcedidaException ex,
+            HttpServletRequest request) {
+        log.warn("Tanda excedida: {}", ex.getMessage());
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(com.restaurante.exception.NoEsRollException.class)
+    public ResponseEntity<ErrorResponseDTO> handleNoEsRoll(
+            com.restaurante.exception.NoEsRollException ex,
+            HttpServletRequest request) {
+        log.warn("Plato no es roll: {}", ex.getMessage());
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
+    }
 }

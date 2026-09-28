@@ -2,6 +2,7 @@ package com.restaurante.service;
 
 import com.restaurante.exception.ReservaNotFoundException;
 import com.restaurante.model.domain.EstadoReserva;
+import com.restaurante.model.domain.Mesa;
 import com.restaurante.model.domain.Reserva;
 import com.restaurante.validator.ReservaValidator;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class ReservaServiceImpl implements ReservaService {
     private final AtomicLong         contador = new AtomicLong(1);
 
     private final ReservaValidator validator;
+    private final MesaService mesaService;
 
     @Override
     public List<Reserva> obtenerTodas() {
@@ -52,15 +54,22 @@ public class ReservaServiceImpl implements ReservaService {
 
     @Override
     public Reserva crear(Reserva reserva) {
+        // ─── Validación 1: la mesa debe existir ─────────────────────
+        Mesa mesa = mesaService.obtenerPorId(reserva.getIdMesa());
+
+        // ─── Validación 2: comensales ≤ capacidad de la mesa ────────
+        validator.validarComensalesContraCapacidad(reserva, mesa.getCapacidad());
+
+        // ─── Validación 3: sin conflicto de horario ─────────────────
         validator.validarSinConflictoHorario(reserva, reservas.values());
 
         reserva.setId(contador.getAndIncrement());
         reserva.setEstado(EstadoReserva.PENDIENTE);
         reservas.put(reserva.getId(), reserva);
 
-        log.info("Reserva creada: id={}, cliente={}, mesa={}, fecha={}",
+        log.info("Reserva creada: id={}, cliente={}, mesa={}, comensales={}",
                 reserva.getId(), reserva.getCliente(),
-                reserva.getIdMesa(), reserva.getFechaHora());
+                reserva.getIdMesa(), reserva.getComensales());
         return reserva;
     }
 

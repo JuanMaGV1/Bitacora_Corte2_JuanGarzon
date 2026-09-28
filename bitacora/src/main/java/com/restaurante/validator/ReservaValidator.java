@@ -40,4 +40,19 @@ public class ReservaValidator {
                     "Una reserva en estado " + reserva.getEstado() + " no puede cancelarse");
         }
     }
+
+    /**
+     * Regla: los comensales de una reserva no pueden superar
+     * la capacidad máxima de la mesa.
+     */
+    public void validarComensalesContraCapacidad(Reserva reserva, int capacidadMesa) {
+        if (reserva.getComensales() > capacidadMesa) {
+            log.warn("Reserva rechazada: {} comensales > capacidad {} de la mesa {}",
+                    reserva.getComensales(), capacidadMesa, reserva.getIdMesa());
+            throw new IllegalArgumentException(
+                    "La reserva tiene " + reserva.getComensales()
+                    + " comensales, pero la mesa " + reserva.getIdMesa()
+                    + " solo tiene capacidad para " + capacidadMesa);
+        }
+    }
 }

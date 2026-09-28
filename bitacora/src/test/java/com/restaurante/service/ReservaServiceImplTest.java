@@ -1,9 +1,11 @@
 package com.restaurante.service;
 
 import com.restaurante.exception.EstadoInvalidoException;
+import com.restaurante.exception.MesaNotFoundException;
 import com.restaurante.exception.ReservaConflictoException;
 import com.restaurante.exception.ReservaNotFoundException;
 import com.restaurante.model.domain.EstadoReserva;
+import com.restaurante.model.domain.Mesa;
 import com.restaurante.model.domain.Reserva;
 import com.restaurante.validator.ReservaValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,18 +15,24 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class ReservaServiceImplTest {
 
     private ReservaValidator validator;
+    private MesaService      mesaService;
     private ReservaServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        validator = new ReservaValidator();   // ← instancia REAL
-        service   = new ReservaServiceImpl(validator);
+        validator   = new ReservaValidator();
+        mesaService = mock(MesaService.class);
+        service     = new ReservaServiceImpl(validator, mesaService);
+
+        // Por defecto, todas las mesas existen con capacidad suficiente
+        when(mesaService.obtenerPorId(anyLong())).thenReturn(
+                Mesa.builder().id(3L).numero(3).capacidad(6).build());
     }
 
     private Reserva reserva() {
@@ -47,17 +55,53 @@ class ReservaServiceImplTest {
     @Test
     @DisplayName("crear — conflicto de horario lanza excepción")
     void crear_conflicto_lanzaExcepcion() {
-        // Crear una primera reserva
         service.crear(reserva());
 
-        // Intentar crear otra en la misma mesa y horario similar
-        assertThrows(ReservaConflictoException.class, () -> service.crear(reserva()));
+        assertThrows(ReservaConflictoException.class,
+                () -> service.crear(reserva()));
+    }
+
+    @Test
+    @DisplayName("crear — mesa no existe lanza MesaNotFoundException")
+    void crear_mesaNoExiste_lanzaExcepcion() {
+        when(mesaService.obtenerPorId(999L))
+                .thenThrow(new MesaNotFoundException("Mesa", 999L));
+
+        Reserva r = reserva();
+        r.setIdMesa(999L);
+
+        assertThrows(MesaNotFoundException.class, () -> service.crear(r));
+    }
+
+    @Test
+    @DisplayName("crear — comensales superan capacidad de la mesa")
+    void crear_comensalesExcedenCapacidad_lanzaExcepcion() {
+        Mesa mesaPequena = Mesa.builder().id(3L).numero(3).capacidad(2).build();
+        when(mesaService.obtenerPorId(3L)).thenReturn(mesaPequena);
+
+        Reserva r = reserva();
+        r.setComensales(4);
+
+        assertThrows(IllegalArgumentException.class, () -> service.crear(r));
+    }
+
+    @Test
+    @DisplayName("crear — comensales igual a capacidad funciona")
+    void crear_comensalesIgualCapacidad_ok() {
+        Mesa mesaExacta = Mesa.builder().id(3L).numero(3).capacidad(4).build();
+        when(mesaService.obtenerPorId(3L)).thenReturn(mesaExacta);
+
+        Reserva r = reserva();
+        r.setComensales(4);
+
+        assertDoesNotThrow(() -> service.crear(r));
     }
 
     @Test
     @DisplayName("obtenerPorId — no existe lanza ReservaNotFoundException")
     void obtenerPorId_noExiste_lanzaExcepcion() {
-        assertThrows(ReservaNotFoundException.class, () -> service.obtenerPorId(99L));
+        assertThrows(ReservaNotFoundException.class,
+                () -> service.obtenerPorId(99L));
     }
 
     @Test
@@ -83,9 +127,13 @@ class ReservaServiceImplTest {
     @Test
     @DisplayName("obtenerVigentes — solo pendientes y confirmadas")
     void obtenerVigentes_filtraCorrecto() {
-        Reserva r1 = service.crear(reserva());           // mesa 3
+        Reserva r1 = service.crear(reserva());
+
         Reserva r2 = reserva();
-        r2.setIdMesa(4L);                                // ← mesa diferente
+        r2.setIdMesa(4L);
+        when(mesaService.obtenerPorId(4L)).thenReturn(
+                Mesa.builder().id(4L).numero(4).capacidad(6).build());
+
         Reserva creada2 = service.crear(r2);
         service.cancelar(creada2.getId());
 

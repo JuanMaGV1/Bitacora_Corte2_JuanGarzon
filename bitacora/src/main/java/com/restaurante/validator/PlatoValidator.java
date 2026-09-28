@@ -21,6 +21,22 @@ public class PlatoValidator {
     /** Precio máximo razonable — regla de negocio del restaurante */
     private static final double PRECIO_MAXIMO = 1_000_000.0;
 
+    /** Capacidad máxima de una tanda de rolls (regla de Sakura Sushi) */
+    public static final int MAX_ROLLS_POR_TANDA = 6;
+
+    /**
+     * Regla de negocio de Sakura Sushi (SS-10):
+     * Los rolls de la barra se preparan en tandas de máximo 6 unidades.
+     */
+    public void validarTandaDeRolls(int cantidadRolls) {
+        if (cantidadRolls > MAX_ROLLS_POR_TANDA) {
+            log.warn("Intento de crear tanda con {} rolls (máx {})",
+                    cantidadRolls, MAX_ROLLS_POR_TANDA);
+            throw new IllegalArgumentException(
+                    "Una tanda de Sakura Sushi no puede tener más de "
+                    + MAX_ROLLS_POR_TANDA + " rolls. Recibidos: " + cantidadRolls);
+        }
+    }
     /**
      * Regla 1: el nombre del plato debe ser único en la carta.
      * Comparación case-insensitive.

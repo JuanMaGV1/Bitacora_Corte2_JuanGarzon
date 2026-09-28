@@ -1,6 +1,7 @@
 package com.restaurante.service;
 
 import com.restaurante.exception.EstadoInvalidoException;
+import com.restaurante.exception.MesaNoDisponibleException;
 import com.restaurante.exception.PedidoNotFoundException;
 import com.restaurante.model.domain.*;
 import com.restaurante.validator.PedidoValidator;
@@ -25,6 +26,7 @@ public class PedidoServiceImpl implements PedidoService {
 
     private final PlatoService    platoService;   // reutiliza
     private final PedidoValidator validator;
+    private final MesaService mesaService;
 
     // ─── LECTURA ────────────────────────────────────────────────────────
 
@@ -61,12 +63,24 @@ public class PedidoServiceImpl implements PedidoService {
     public Pedido confirmar(Long idMesa, List<Long> idPlatos, String notas) {
         log.info("Confirmando pedido para mesa {} con {} rolls", idMesa, idPlatos.size());
 
+        // ─── Validación 1: la mesa debe existir ─────────────────────
+        Mesa mesa = mesaService.obtenerPorId(idMesa);   // lanza 404 si no existe
+
+        // ─── Validación 2: la mesa debe tener cuenta abierta ────────
+        if (!mesa.tieneCuentaAbierta()) {
+            log.warn("Intento de pedido en mesa {} sin cuenta abierta", idMesa);
+            throw new MesaNoDisponibleException(
+                    "No se puede crear un pedido en la mesa " + mesa.getNumero()
+                    + " porque no tiene cuenta abierta");
+        }
+
+        // ─── Validación 3: los platos existen y están disponibles ───
         List<ItemPedido> items = idPlatos.stream()
                 .map(idPlato -> {
                     Plato plato = platoService.obtenerPorId(idPlato);
                     if (!plato.estaDisponible()) {
                         throw new EstadoInvalidoException(
-                                "El roll '" + plato.getNombre() + "' no está disponible");
+                                "El plato '" + plato.getNombre() + "' no está disponible");
                     }
                     return ItemPedido.builder()
                             .idPlato(plato.getId())
@@ -86,12 +100,9 @@ public class PedidoServiceImpl implements PedidoService {
                 .notas(notas)
                 .build();
 
-        // Confirmar significa enviar a cocina — pasa a RECIBIDO
-        validator.validarConfirmable(pedido);
-
         pedidos.put(pedido.getId(), pedido);
-        log.info("Pedido #{} enviado a cocina — {} rolls, total=${}",
-                pedido.getId(), pedido.cantidadItems(), pedido.calcularTotal());
+        log.info("Pedido #{} enviado a cocina — mesa {} — {} rolls",
+                pedido.getId(), idMesa, pedido.cantidadItems());
         return pedido;
     }
 
@@ -188,5 +199,14 @@ public class PedidoServiceImpl implements PedidoService {
         }
         pedido.setEstado(EstadoPedido.CANCELADO);
         log.info("Pedido #{} cancelado", id);
+    }
+
+    @Override
+    public boolean tienePedidosActivosConPlato(Long idPlato) {
+        return pedidos.values().stream()
+                .filter(p -> p.getEstado() != EstadoPedido.ENTREGADO
+                        && p.getEstado() != EstadoPedido.CANCELADO)
+                .flatMap(p -> p.getItems().stream())
+                .anyMatch(item -> item.getIdPlato().equals(idPlato));
     }
 }

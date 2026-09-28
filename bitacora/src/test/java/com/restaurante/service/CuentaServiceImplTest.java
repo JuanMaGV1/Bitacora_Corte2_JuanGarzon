@@ -3,6 +3,7 @@ package com.restaurante.service;
 import com.restaurante.exception.CuentaNoAbiertaException;
 import com.restaurante.exception.CuentaNotFoundException;
 import com.restaurante.model.domain.Cuenta;
+import com.restaurante.model.domain.EstadoPedido;
 import com.restaurante.model.domain.Mesa;
 import com.restaurante.model.domain.Pedido;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class CuentaServiceImplTest {
@@ -105,4 +107,30 @@ class CuentaServiceImplTest {
     void obtenerTodas_vacio() {
         assertTrue(service.obtenerTodas().isEmpty());
     }
+
+    @Test
+    @DisplayName("cerrar — con pedidos activos lanza excepción")
+    void cerrar_conActivos_lanzaExcepcion() {
+        when(mesaService.obtenerPorId(1L)).thenReturn(mesa());
+        when(mesaService.abrirCuenta(1L)).thenReturn(mesa());
+        when(mesaService.cerrarCuenta(1L)).thenReturn(mesa());
+
+        Cuenta cuenta = service.abrir(1L);
+
+        // Simular que tiene un pedido activo
+        Pedido activo = Pedido.builder().id(10L).estado(EstadoPedido.RECIBIDO)
+                .items(List.of()).build();
+        when(pedidoService.obtenerPorId(10L)).thenReturn(activo);
+
+        // Agregar el pedido a la cuenta (forzándolo con mock)
+        when(pedidoService.obtenerPorId(anyLong()))
+                .thenReturn(Pedido.builder().id(1L).items(List.of()).build());
+        service.agregarPedido(cuenta.getId(), 10L);
+
+        when(pedidoService.obtenerPorId(10L)).thenReturn(activo);
+
+        assertThrows(CuentaNoAbiertaException.class,
+                () -> service.cerrar(cuenta.getId()));
+    }
+
 }

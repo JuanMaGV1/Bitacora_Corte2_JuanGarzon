@@ -4,6 +4,7 @@ import com.restaurante.exception.CuentaNoAbiertaException;
 import com.restaurante.exception.CuentaNotFoundException;
 import com.restaurante.model.domain.Cuenta;
 import com.restaurante.model.domain.EstadoCuenta;
+import com.restaurante.model.domain.EstadoPedido;
 import com.restaurante.model.domain.Mesa;
 import com.restaurante.model.domain.Pedido;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +93,18 @@ public class CuentaServiceImpl implements CuentaService {
         Cuenta cuenta = obtenerPorId(id);
         if (!cuenta.estaAbierta()) {
             throw new CuentaNoAbiertaException("La cuenta ya está cerrada");
+        }
+
+        // ─── Validación: no cerrar con pedidos activos ──────────────
+        boolean tieneActivos = cuenta.getIdsPedidos().stream()
+                .map(pedidoService::obtenerPorId)
+                .anyMatch(p -> p.getEstado() != EstadoPedido.ENTREGADO
+                            && p.getEstado() != EstadoPedido.CANCELADO);
+
+        if (tieneActivos) {
+            log.warn("Intento de cerrar cuenta #{} con pedidos activos", id);
+            throw new CuentaNoAbiertaException(
+                    "No se puede cerrar la cuenta: aún hay pedidos activos en la mesa");
         }
 
         cuenta.cerrarCuenta();

@@ -6,6 +6,7 @@ import com.restaurante.validator.PlatoValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 
 import java.util.List;
 import java.util.Map;
@@ -18,16 +19,21 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PlatoServiceImpl implements PlatoService {
 
     /** Almacén en memoria — reemplazable por Repository en el futuro */
     private final Map<Long, Plato> platos   = new ConcurrentHashMap<>();
     private final AtomicLong        contador = new AtomicLong(1);
 
-    /** Reglas de negocio delegadas al Validator */
     private final PlatoValidator validator;
-
+    private final PedidoService  pedidoService;
+    
+    // Constructor manual con @Lazy para romper el ciclo Plato ↔ Pedido
+    public PlatoServiceImpl(PlatoValidator validator,
+                            @Lazy PedidoService pedidoService) {
+        this.validator     = validator;
+        this.pedidoService = pedidoService;
+    }
     // ─── LECTURA ────────────────────────────────────────────────────────
 
     @Override
@@ -106,7 +112,13 @@ public class PlatoServiceImpl implements PlatoService {
 
     @Override
     public void eliminar(Long id) {
-        obtenerPorId(id);   // Lanza 404 si no existe
+        obtenerPorId(id);
+
+        if (pedidoService.tienePedidosActivosConPlato(id)) {
+            throw new IllegalArgumentException(
+                    "No se puede eliminar el plato: tiene pedidos activos");
+        }
+
         platos.remove(id);
         log.info("Plato eliminado: id={}", id);
     }

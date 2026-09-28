@@ -22,11 +22,13 @@ class PlatoServiceImplTest {
 
     private PlatoValidator     validator;   // doble controlado
     private PlatoServiceImpl   service;     // clase real bajo prueba
+    private PedidoService pedidoService;
 
-    @BeforeEach
+     @BeforeEach
     void setUp() {
-        validator = mock(PlatoValidator.class);
-        service   = new PlatoServiceImpl(validator);
+        validator     = mock(PlatoValidator.class);
+        pedidoService = mock(PedidoService.class);   // ← AGREGAR
+        service       = new PlatoServiceImpl(validator, pedidoService);
     }
 
     /** Helper para crear un Plato de prueba */
@@ -205,5 +207,17 @@ class PlatoServiceImplTest {
         assertEquals("Modificado", resultado.getNombre());
         assertEquals(2000.0, resultado.getPrecio());
         assertEquals("POSTRES", resultado.getCategoria());
+    }
+
+    @Test
+    @DisplayName("eliminar — plato con pedidos activos lanza excepción")
+    void eliminar_conPedidosActivos_lanzaExcepcion() {
+        Plato creado = service.crear(plato("Sashimi", 22000.0));
+
+        when(pedidoService.tienePedidosActivosConPlato(creado.getId()))
+                .thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.eliminar(creado.getId()));
     }
 }

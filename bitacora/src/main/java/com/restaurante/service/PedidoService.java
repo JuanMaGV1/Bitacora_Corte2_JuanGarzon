@@ -12,6 +12,8 @@ public interface PedidoService {
     List<Pedido> obtenerPorMesa(Long idMesa);
     Pedido obtenerPorId(Long id);
 
+    boolean tienePedidosActivosConPlato(Long idPlato);
+
     // SS-05
     Pedido confirmar(Long idMesa, List<Long> idPlatos, String notas);
 
