@@ -3,49 +3,42 @@
 ## Autor
 Juan Garzón — DOSW Grupo 1
 
-## Restaurante
-**Sakura Sushi** — Barra de sushi con preparación por lotes y rolls armados a pedido.
+## Restaurante: Sakura Sushi
+**Barra de sushi con preparación por lotes y rolls armados a pedido.**
 
 **Concepto del restaurante:**
 - Los rolls se preparan en **tandas de máximo 6 unidades** para mantener el ritmo de la barra
-- Los ingredientes pueden agotarse y bloquean la creación de platos que los usen
-- Los rolls personalizados se arman a pedido del cliente
-- Flujo de estados del pedido: `RECIBIDO → EN_PREPARACION → LISTO → ENTREGADO`
+- Los ingredientes agotados bloquean la creación de rolls que los usen
+- Los pedidos se asocian automáticamente a la cuenta abierta de la mesa
+- Flujo de estados: `RECIBIDO → EN_PREPARACION → LISTO → ENTREGADO`
 
 ## Descripción
-API REST que digitaliza la operación de Sakura Sushi: gestión de carta, pedidos, mesas, cuentas, reservas, ingredientes, parqueadero, tandas de rolls y reportes. Sin persistencia aún — todo en memoria con Streams. Construida con arquitectura MVC en capas, MapStruct, Lombok, JUnit 5, Mockito, JaCoCo, SonarQube y Springdoc OpenAPI.
+API REST que digitaliza la operación de Sakura Sushi: gestión de carta, pedidos,
+mesas, cuentas, reservas, ingredientes, parqueadero, tandas de rolls y reportes.
 
-## Funcionalidades
+**Arquitectura híbrida de persistencia:**
+- **PostgreSQL + JPA** → datos relacionales (platos, mesas, pedidos, cuentas, etc.)
+- **MongoDB** → datos de estructura flexible (tandas de preparación)
 
-| # | Funcionalidad | Descripción |
-|---|--------------|-------------|
-| 1 | **Carta y Platos** | Rolls, sashimis, nigiris con disponibilidad |
-| 2 | **Menú del Cliente** | Vista filtrada solo de platos disponibles |
-| 3 | **Ingredientes** | Catálogo para personalización de rolls |
-| 4 | **Pedidos** | Flujo completo con transiciones de estado |
-| 5 | **Tandas** | **Preparación por lotes de máximo 6 rolls** |
-| 6 | **Mesas** | Apertura y cierre de cuentas |
-| 7 | **Cuentas** | Consolidación de pedidos y cierre |
-| 8 | **Reservas** | Gestión con validación de conflictos y capacidad |
-| 9 | **Parqueadero** | Entrada/salida con cálculo de cobro |
-| 10 | **Reportes** | Consolidados con Streams |
+Construida con arquitectura MVC en capas, MapStruct, Lombok, JUnit 5, Mockito,
+JaCoCo, SonarQube y Springdoc OpenAPI.
 
 ## Arquitectura
 
-La API sigue un patrón de **arquitectura en capas**, donde cada capa tiene una única responsabilidad:
-
 Cliente (Swagger/Postman)
-      ↓
+   ↓
 Controller    → Recibe HTTP, valida @Valid, delega, responde
-      ↓
+   ↓
 Service       → Orquesta, aplica lógica, usa Streams
-      ↓
+   ↓
 Validator     → Reglas de negocio puras
-      ↓
-Dominio       → Objetos con comportamiento (en memoria)
-      ↓
-Mapper        → Traduce DTO ↔ Dominio (MapStruct)
-      ↓
+   ↓
+Dominio       → Objetos con comportamiento (sin saber de BD)
+   ↓
+Mapper        → Traduce DTO ↔ Dominio ↔ Entity/Document
+   ↓
+Repository    → JPA (PostgreSQL) o Mongo (MongoDB)
+   ↓
 Cliente (JSON Response)
 
 ### Responsabilidades por capa
@@ -55,44 +48,57 @@ Cliente (JSON Response)
 | **Controller** | Recibe HTTP, delega, responde | No tiene lógica de negocio |
 | **Service** | Orquesta, aplica reglas | No conoce HTTP, no convierte DTOs |
 | **Validator** | Aplica reglas de negocio puras | No conoce HTTP ni DTOs |
-| **Mapper** | Traduce DTO ↔ Dominio | No tiene lógica de negocio |
-| **Domain** | Objetos con comportamiento propio | No conoce Spring ni JPA |
-| **ExceptionHandler** | Respuestas uniformes de error | No conoce reglas de negocio |
+| **Mapper** | Traduce entre 3 capas | No tiene lógica de negocio |
+| **Dominio** | Objetos con comportamiento propio | No conoce Spring ni JPA |
+| **Entity/Document** | Estructura de persistencia | No tiene lógica de negocio |
+| **Repository** | Acceso a datos | No conoce HTTP |
+| **ExceptionHandler** | Respuestas uniformes | No conoce reglas |
+
+### El Mapper tiene 3 capas
+
+RequestDTO ←→ Dominio ←→ Entity (PostgreSQL)
+                  ↕
+              Document (MongoDB)
+
+- `PlatoMapper` → RequestDTO ↔ Dominio (usado por el Controller)
+- `PlatoEntityMapper` → Dominio ↔ PlatoEntity (usado por el Service)
+- `TandaDocumentMapper` → Dominio/DTO ↔ TandaDocument (usado por el Service de Tanda)
 
 ### Estructura de paquetes
-
-```
 com.restaurante
 ├── controller/           → Endpoints REST + GlobalExceptionHandler
 ├── service/              → Interfaces + Implementaciones
 ├── validator/            → Reglas de negocio
-├── mapper/               → MapStruct
+├── mapper/               → MapStruct (presentación + persistencia)
 ├── util/                 → Utilidades compartidas
 ├── model/
 │   ├── domain/           → Entidades puras + enums
 │   └── dto/
 │       ├── request/      → DTOs de entrada (@Valid)
 │       └── response/     → DTOs de salida
+├── persistence/          → Clases de infraestructura de datos
+│   ├── entity/           → Entidades JPA (@Entity) — PostgreSQL
+│   └── document/         → Documentos Mongo (@Document) — MongoDB
+├── repository/           → JpaRepository + MongoRepository
 ├── exception/            → Excepciones propias
 └── config/               → Swagger + CORS
-```
 
-## 🎯 Funcionalidades
+## Funcionalidades
 
-| # | Funcionalidad | Descripción |
-|---|--------------|-------------|
-| 1 | **Carta y Platos** | Rolls, sashimis, nigiris con disponibilidad |
-| 2 | **Menú del Cliente** | Vista filtrada solo de platos disponibles |
-| 3 | **Ingredientes** | Catálogo para personalización de rolls |
-| 4 | **Pedidos** | Flujo completo con transiciones de estado |
-| 5 | **Tandas** | **Preparación por lotes de máximo 6 rolls** |
-| 6 | **Mesas** | Apertura y cierre de cuentas |
-| 7 | **Cuentas** | Consolidación de pedidos y cierre |
-| 8 | **Reservas** | Validación de conflictos de horario y capacidad |
-| 9 | **Parqueadero** | Entrada/salida con cálculo de cobro |
-| 10 | **Reportes** | Consolidados con Streams |
+| # | Funcionalidad | Descripción | Persistencia |
+|---|--------------|-------------|:------------:|
+| 1 | **Carta y Platos** | Rolls, sashimis, nigiris con disponibilidad | PostgreSQL |
+| 2 | **Menú del Cliente** | Vista filtrada solo de platos disponibles | — |
+| 3 | **Ingredientes** | Catálogo para personalización de rolls | PostgreSQL |
+| 4 | **Pedidos** | Flujo completo con transiciones de estado | PostgreSQL |
+| 5 | **Tandas** | Preparación por lotes de máximo 6 rolls | **MongoDB** |
+| 6 | **Mesas** | Apertura y cierre de cuentas | PostgreSQL |
+| 7 | **Cuentas** | Consolidación automática de pedidos y cierre | PostgreSQL |
+| 8 | **Reservas** | Validación de conflictos de horario y capacidad | PostgreSQL |
+| 9 | **Parqueadero** | Entrada/salida con cálculo de cobro | PostgreSQL |
+| 10 | **Reportes** | Consolidados con Streams | — |
 
-## 📊 Tabla de Endpoints
+## Tabla de Endpoints
 
 ### PlatoController — `/api/v1/platos`
 | Verbo | Endpoint | Éxito | Errores |
@@ -135,13 +141,15 @@ com.restaurante
 | PATCH | `/api/v1/pedidos/{id}/estado` | 200 | 404, 422 |
 | DELETE | `/api/v1/pedidos/{id}` | 204 | 404, 422 |
 
+**Automatización:** al crear un pedido, se asocia automáticamente a la cuenta abierta de la mesa.
+
 ### TandaController — `/api/v1/tandas`
 | Verbo | Endpoint | Éxito | Errores |
 |-------|----------|-------|---------|
 | GET | `/api/v1/tandas` | 200 | — |
 | POST | `/api/v1/tandas` | 201 | 404, 422 |
 
-**Regla característica:** máximo 6 rolls por tanda. Solo acepta platos de categoría `ROLL`.
+**Persistencia:** MongoDB (documentos con IDs de rolls embebidos).
 
 ### MesaController — `/api/v1/mesas`
 | Verbo | Endpoint | Éxito | Errores |
@@ -161,7 +169,6 @@ com.restaurante
 | GET | `/api/v1/cuentas/{id}` | 200 | 404 |
 | GET | `/api/v1/cuentas/mesa/{idMesa}` | 200 | 404 |
 | POST | `/api/v1/cuentas/mesa/{idMesa}` | 201 | 404, 422 |
-| POST | `/api/v1/cuentas/{id}/pedidos/{idPedido}` | 200 | 404, 422 |
 | PATCH | `/api/v1/cuentas/{id}/cerrar` | 200 | 404, 422 |
 
 ### ReservaController — `/api/v1/reservas`
@@ -178,7 +185,7 @@ com.restaurante
 ### ParqueaderoController — `/api/v1/parqueadero`
 | Verbo | Endpoint | Éxito | Errores |
 |-------|----------|-------|---------|
-| POST | `/api/v1/parqueadero/entrada` | 201 | 400, 409, 422 |
+| POST | `/api/v1/parqueadero/entrada` | 201 | 400, 409 |
 | POST | `/api/v1/parqueadero/salida/{placa}` | 200 | 404 |
 | GET | `/api/v1/parqueadero/activos` | 200 | — |
 | GET | `/api/v1/parqueadero/estado` | 200 | — |
@@ -191,64 +198,92 @@ com.restaurante
 | GET | `/api/v1/reportes/ingresos-por-categoria` | 200 | — |
 | GET | `/api/v1/reportes/platos-populares?top=N` | 200 | — |
 
-## Reglas de Negocio de Sakura Sushi
+## Reglas de Negocio
 
-### Reglas específicas del concepto japonés
+### Reglas específicas de Sakura Sushi
 
-1. **Tandas de máximo 6 rolls** — Los rolls de la barra se preparan en lotes de máximo 6 unidades
-2. **Solo ROLLs en una tanda** — Un té verde o un postre no pueden ir en una tanda de rolls
-3. **Rolls disponibles** — Si un roll está agotado, no se puede incluir en la tanda
+1. **Tandas de máximo 6 rolls** — Los rolls se preparan en lotes de máximo 6 unidades
+2. **Solo ROLLs en una tanda** — Un té verde o un postre no pueden ir en una tanda
+3. **Rolls disponibles** — Si un roll está agotado, no se puede incluir
 4. **Rolls existentes** — Cada ID en la tanda debe existir en la carta
+5. **Auto-asociación de pedido a cuenta** — Al crear un pedido, se agrega automáticamente a la cuenta abierta de la mesa
 
-### Reglas generales del restaurante
+### Reglas generales
 
-5. **Pedido requiere mesa con cuenta abierta** — No se pueden crear pedidos en mesas sin cuenta
-6. **Platos disponibles** — No se pueden pedir platos agotados
-7. **Modificar solo en RECIBIDO** — Una vez el pedido pasa a cocina, no se modifica
-8. **Transiciones de estado válidas** — `RECIBIDO → EN_PREPARACION → LISTO → ENTREGADO`
-9. **Cuenta no cierra con pedidos activos** — Todos los pedidos deben estar ENTREGADOS o CANCELADOS
-10. **Una cuenta por mesa** — No se puede abrir una segunda cuenta en una mesa ya ocupada
-11. **Mesa no se elimina con cuenta abierta**
-12. **Plato no se elimina con pedidos activos**
-13. **Conflicto de reservas** — No pueden solaparse reservas vigentes en la misma mesa
-14. **Comensales ≤ capacidad de mesa** — La reserva no puede exceder la capacidad
-15. **Precio congelado** — El `ItemPedido` congela el precio al momento del pedido
+6. **Pedido requiere mesa con cuenta abierta**
+7. **Platos disponibles** — No se pueden pedir platos agotados
+8. **Modificar solo en RECIBIDO**
+9. **Transiciones de estado válidas** — `RECIBIDO → EN_PREPARACION → LISTO → ENTREGADO`
+10. **Cuenta no cierra con pedidos activos**
+11. **Una cuenta por mesa**
+12. **Mesa no se elimina con cuenta abierta**
+13. **Plato no se elimina con pedidos activos**
+14. **Conflicto de reservas** — No pueden solaparse reservas vigentes en la misma mesa
+15. **Comensales ≤ capacidad de mesa**
+16. **Precio congelado** — El `ItemPedido` congela el precio al momento del pedido
 
-## Cómo ejecutar
+## Cómo ejecutar en OTRO PC (configuración)
 
-### Compilar y empaquetar
+### A. Cambios en `application.yml`
+
+**Ajusta según tu entorno:**
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sakura_sushi   # ← tu host/puerto/BD
+    username: postgres                                    # ← tu usuario
+    password: TU_PASSWORD_AQUI                            # ← tu password
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/sakura_sushi_nosql   # ← tu host/puerto/BD
+```
+
+**Si PostgreSQL está en otro host (ej: servidor remoto):**
+
+```yaml
+url: jdbc:postgresql://192.168.1.100:5432/sakura_sushi
+username: mi_usuario
+password: mi_password
+```
+
+**Si MongoDB tiene autenticación:**
+
+```yaml
+uri: mongodb://usuario:password@localhost:27017/sakura_sushi_nosql?authSource=admin
+```
+
+### B. Pasos en el nuevo PC
+
 ```bash
+# 1. Clonar
+git clone https://github.com/TU_USUARIO/Bitacora_Corte2_JuanGarzon.git
+cd Bitacora_Corte2_JuanGarzon/bitacora
+
+# 2. Crear BD en PostgreSQL (una sola vez)
+psql -U postgres -c "CREATE DATABASE sakura_sushi;"
+
+# 3. Verificar servicios
+Get-Service MongoDB           # Debe estar Running
+Get-Service postgresql-x64-16 # Debe estar Running
+
+# 4. Editar application.yml con tu password
+
+# 5. Compilar y ejecutar
 mvn clean package -DskipTests
-```
-
-### Ejecutar la aplicación
-```bash
 java -jar target/bitacora-1.0.0-SNAPSHOT.jar
+
+# 6. Abrir Swagger
+# http://localhost:8080/swagger-ui.html
 ```
 
-Abrir en el navegador: **http://localhost:8080/swagger-ui.html**
+## Guía paso a paso — Cómo crear objetos en Swagger
 
-### Ejecutar tests
-```bash
-mvn clean test
-```
+**Sigue este orden estricto** porque hay dependencias entre dominios.
 
-### Generar reporte de cobertura (JaCoCo)
-```bash
-mvn clean test
-start target/site/jacoco/index.html
-```
-
-### Análisis estático (SonarQube)
-```bash
-mvn clean verify sonar:sonar "-Dsonar.login=TU_TOKEN"
-```
-
-## Orden para crear objetos en Swagger
-
-**El orden importa** porque hay dependencias entre objetos. Sigue este orden:
-
-### Ingredientes
+### Paso 1 — Ingredientes (independiente)
 
 **POST** `/api/v1/ingredientes`
 
@@ -264,11 +299,11 @@ mvn clean verify sonar:sonar "-Dsonar.login=TU_TOKEN"
 { "nombre": "Queso crema", "precio": 2000, "tipo": "QUESO" }
 ```
 
-### Platos
+### Paso 2 — Platos / Rolls (independiente)
 
 **POST** `/api/v1/platos`
 
-**Rolls** (categoría `ROLL`):
+**Rolls** (categoría `ROLL` — importantes para tandas):
 
 ```json
 {
@@ -288,7 +323,7 @@ mvn clean verify sonar:sonar "-Dsonar.login=TU_TOKEN"
 }
 ```
 
-**Otros platos** (para probar el rechazo de tandas):
+**Otros platos** (NO rolls — para probar rechazos):
 
 ```json
 {
@@ -299,7 +334,7 @@ mvn clean verify sonar:sonar "-Dsonar.login=TU_TOKEN"
 }
 ```
 
-### Mesas
+### Paso 3 — Mesas (independiente)
 
 **POST** `/api/v1/mesas`
 
@@ -311,7 +346,11 @@ mvn clean verify sonar:sonar "-Dsonar.login=TU_TOKEN"
 { "numero": 2, "capacidad": 2 }
 ```
 
-###  Abrir Cuenta
+```json
+{ "numero": 3, "capacidad": 6 }
+```
+
+### Paso 4 — Abrir cuenta en una mesa
 
 **Obligatorio antes de crear pedidos.**
 
@@ -319,7 +358,9 @@ mvn clean verify sonar:sonar "-Dsonar.login=TU_TOKEN"
 
 Sin body.
 
-### Crear Pedido
+**Respuesta:** `201 Created` con `id: 1`, `total: 0.0`.
+
+### Paso 5 — Pedidos (auto-asocia a cuenta)
 
 **POST** `/api/v1/pedidos`
 
@@ -331,32 +372,27 @@ Sin body.
 }
 ```
 
-###  Crear Tanda
+**El pedido se agrega automáticamente a la cuenta abierta de la mesa.**
+
+**En la consola verás:**
+```
+Pedido #1 creado para mesa 1 — 2 items
+Pedido #1 agregado automáticamente a cuenta #1
+```
+
+### Paso 6 — Tandas (MongoDB)
 
 **POST** `/api/v1/tandas`
-
-Body: array de IDs de rolls
 
 ```json
 [1, 2]
 ```
 
-###  Flujo del pedido (cocina)
+(Array de IDs de rolls.)
 
-```
-PATCH /api/v1/pedidos/1/estado?nuevoEstado=EN_PREPARACION
-PATCH /api/v1/pedidos/1/estado?nuevoEstado=LISTO
-PATCH /api/v1/pedidos/1/estado?nuevoEstado=ENTREGADO
-```
+**Respuesta:** `id` tipo String de Mongo (`6abb...`), `cantidad: 2`.
 
-###  Cerrar Cuenta
-
-```
-POST /api/v1/cuentas/1/pedidos/1
-PATCH /api/v1/cuentas/1/cerrar
-```
-
-###  Reservas
+### Paso 7 — Reservas
 
 **POST** `/api/v1/reservas`
 
@@ -369,7 +405,7 @@ PATCH /api/v1/cuentas/1/cerrar
 }
 ```
 
-### Parqueadero
+### Paso 8 — Parqueadero
 
 **POST** `/api/v1/parqueadero/entrada`
 
@@ -377,81 +413,84 @@ PATCH /api/v1/cuentas/1/cerrar
 { "placa": "ABC-123" }
 ```
 
-### Reportes
+**Simular salida:**
+
+**POST** `/api/v1/parqueadero/salida/ABC-123`
+
+### Paso 9 — Reportes (solo lectura)
 
 **GET** `/api/v1/reportes/resumen`
 
-## 🧪 Pruebas de reglas de negocio
+**GET** `/api/v1/reportes/ingresos-por-categoria`
 
-### Prueba 1 — Tanda con más de 6 rolls
+**GET** `/api/v1/reportes/platos-populares?top=3`
 
-**POST** `/api/v1/tandas`
+### Flujo completo resumido
 
-```json
-[1, 2, 1, 2, 1, 2, 1]
+| # | Método | Endpoint | Depende de |
+|---|--------|----------|-----------|
+| 1 | POST | `/api/v1/ingredientes` | — |
+| 2 | POST | `/api/v1/platos` | — |
+| 3 | POST | `/api/v1/mesas` | — |
+| 4 | POST | `/api/v1/cuentas/mesa/{idMesa}` | Mesa existente |
+| 5 | POST | `/api/v1/pedidos` | Mesa con cuenta + platos |
+| 6 | POST | `/api/v1/tandas` | Platos ROLL |
+| 7 | POST | `/api/v1/reservas` | Mesa existente |
+| 8 | POST | `/api/v1/parqueadero/entrada` | — |
+| 9 | GET | `/api/v1/reportes/*` | Datos previos |
+
+## Resetear la base de datos
+
+### PostgreSQL — Borrar todos los datos
+
+Ejecuta en DBeaver (conectado a `sakura_sushi`, alt+x):
+
+```sql
+SET session_replication_role = 'replica';
+
+TRUNCATE TABLE items_pedido RESTART IDENTITY CASCADE;
+TRUNCATE TABLE pedidos RESTART IDENTITY CASCADE;
+TRUNCATE TABLE cuenta_pedidos RESTART IDENTITY CASCADE;
+TRUNCATE TABLE cuentas RESTART IDENTITY CASCADE;
+TRUNCATE TABLE reservas RESTART IDENTITY CASCADE;
+TRUNCATE TABLE registros_vehiculo RESTART IDENTITY CASCADE;
+TRUNCATE TABLE mesas RESTART IDENTITY CASCADE;
+TRUNCATE TABLE platos RESTART IDENTITY CASCADE;
+TRUNCATE TABLE ingredientes RESTART IDENTITY CASCADE;
+
+SET session_replication_role = 'origin';
 ```
 
-**Respuesta esperada — `422 Unprocessable Entity`:**
-```json
-{
-  "status": 422,
-  "error": "Unprocessable Entity",
-  "message": "Una tanda de Sakura Sushi no puede tener más de 6 rolls. Recibidos: 7"
-}
+**Los IDs se resetean** — el próximo POST empieza en 1.
+
+### MongoDB — Borrar todas las tandas
+
+Abre **MongoDB Compass**:
+
+1. Conexión a `localhost:27017`
+2. Expande `sakura_sushi_nosql` → colección `tandas`
+3. Clic derecho → **Drop Collection**
+
+O desde la consola de Compass (MongoDB shell):
+
+```javascript
+use sakura_sushi_nosql
+db.tandas.deleteMany({})
 ```
 
-### Prueba 2 — Tanda con plato que no es ROLL
+## 🧪 Ejecutar tests
 
-**POST** `/api/v1/tandas`
-
-```json
-[1, 3]
+```bash
+mvn clean test
 ```
 
-(siendo 3 la bebida)
+**Resultado esperado:** ~155 tests en verde.
 
-**Respuesta esperada — `422`:**
-```json
-{
-  "status": 422,
-  "message": "Solo se pueden agrupar rolls en una tanda. Los siguientes no son rolls: [Té verde (BEBIDA)]"
-}
-```
+### Reporte de cobertura (JaCoCo)
 
-### Prueba 3 — Transición de estado inválida
-
-**PATCH** `/api/v1/pedidos/1/estado?nuevoEstado=RECIBIDO`
-
-**Respuesta esperada — `422`:**
-```json
-{
-  "status": 422,
-  "message": "No se puede pasar de ENTREGADO a RECIBIDO"
-}
-```
-
-### Prueba 4 — Conflicto de reserva
-
-**POST** `/api/v1/reservas` con misma mesa y horario cercano
-
-**Respuesta esperada — `409 Conflict`:**
-```json
-{
-  "status": 409,
-  "message": "Ya existe una reserva vigente para la mesa 2 cerca de ese horario"
-}
-```
-
-### Prueba 5 — Comensales exceden capacidad
-
-**POST** `/api/v1/reservas` en mesa de capacidad 2 con 10 comensales
-
-**Respuesta esperada — `422`:**
-```json
-{
-  "status": 422,
-  "message": "La reserva tiene 10 comensales, pero la mesa 2 solo tiene capacidad para 2"
-}
+```bash
+mvn clean test
+start target/site/jacoco/index.html
 ```
 
 ## 📸 Evidencias
@@ -459,7 +498,7 @@ PATCH /api/v1/cuentas/1/cerrar
 ### Swagger UI — Todos los grupos
 ![Swagger UI](docs/images/Swagger.png)
 
-### Cobertura de pruebas — JaCoCo
+### Cobertura JaCoCo
 ![Cobertura](docs/images/Cobertura.png)
 
 ### Tests JUnit + Mockito
@@ -474,7 +513,10 @@ PATCH /api/v1/cuentas/1/cerrar
 |-----------|---------|
 | Java | 24 |
 | Spring Boot | 3.4.1 |
-| Maven | 3.9+ |
+| Spring Data JPA | 3.4.1 |
+| Spring Data MongoDB | 3.4.1 |
+| PostgreSQL | 15+ |
+| MongoDB | 7.0+ |
 | Lombok | 1.18.48 |
 | MapStruct | 1.6.2 |
 | springdoc-openapi | 2.8.4 |
@@ -482,3 +524,28 @@ PATCH /api/v1/cuentas/1/cerrar
 | Mockito | 5.x |
 | JaCoCo | 0.8.13 |
 | SonarQube | 9.9 LTS |
+
+## 🎓 Decisiones de diseño
+
+### ¿Por qué PostgreSQL para la mayoría de dominios?
+
+- **Datos relacionados** — un pedido tiene una mesa, una cuenta tiene pedidos, etc.
+- **Integridad referencial** — `@ManyToOne` y `@OneToMany` garantizan consistencia
+- **Transacciones ACID** — crítico para cuentas y pagos
+- **Joins eficientes** — `@Query` con `JOIN FETCH` evita N+1
+
+### ¿Por qué MongoDB para Tanda?
+
+- **Estructura flexible** — la lista de rolls es solo un array de IDs
+- **No requiere tabla intermedia** — se embebe directamente en el documento
+- **Escritura rápida** — sin overhead de joins
+- **Un documento por preparación** — patrón natural para eventos
+
+### ¿Por qué el Mapper tiene 3 capas?
+
+Cada capa tiene una razón de cambio distinta:
+- **Presentación** (Request/Response) → puede cambiar por decisiones de API
+- **Dominio** → puede cambiar por lógica de negocio
+- **Persistencia** (Entity/Document) → puede cambiar por decisiones de BD
+
+Mantenerlas separadas permite cambiar cualquiera sin tocar las otras dos.
