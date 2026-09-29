@@ -44,7 +44,7 @@ class IngredienteServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ crear — guarda ingrediente")
+    @DisplayName("crear — guarda ingrediente")
     void crear_valido() {
         Ingrediente entrada = ingrediente("Salmón");
         IngredienteEntity guardada = entity(1L, "Salmón");
@@ -61,7 +61,7 @@ class IngredienteServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ crear — duplicado lanza excepción")
+    @DisplayName("crear — duplicado lanza excepción")
     void crear_duplicado_lanza() {
         doThrow(new IngredienteAlreadyExistsException("dup"))
                 .when(validator).validarNombreUnico(any());
@@ -71,7 +71,7 @@ class IngredienteServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ obtenerPorId — no existe lanza excepción")
+    @DisplayName("obtenerPorId — no existe lanza excepción")
     void obtenerPorId_noExiste() {
         when(ingredienteRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -79,7 +79,7 @@ class IngredienteServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerTodos — lista vacía")
+    @DisplayName("obtenerTodos — lista vacía")
     void obtenerTodos_vacio() {
         when(ingredienteRepository.findAll()).thenReturn(List.of());
 
@@ -87,7 +87,7 @@ class IngredienteServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ eliminar — borra del repository")
+    @DisplayName("eliminar — borra del repository")
     void eliminar_existe() {
         when(ingredienteRepository.existsById(1L)).thenReturn(true);
 

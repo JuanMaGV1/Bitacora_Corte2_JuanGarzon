@@ -45,7 +45,7 @@ class MesaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ crear — mesa queda DISPONIBLE")
+    @DisplayName("crear — mesa queda DISPONIBLE")
     void crear_ok() {
         MesaEntity guardada = entity(1L, 1, false);
         Mesa dominio = Mesa.builder().id(1L).numero(1).estado(EstadoMesa.DISPONIBLE).cuentaAbierta(false).build();
@@ -61,7 +61,7 @@ class MesaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ abrirCuenta — ya abierta lanza excepción")
+    @DisplayName("abrirCuenta — ya abierta lanza excepción")
     void abrirCuenta_yaAbierta_lanza() {
         MesaEntity entity = entity(1L, 1, true);
         Mesa dominio = Mesa.builder().id(1L).numero(1).cuentaAbierta(true).build();
@@ -75,7 +75,7 @@ class MesaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ obtenerPorId — no existe lanza excepción")
+    @DisplayName("obtenerPorId — no existe lanza excepción")
     void obtenerPorId_noExiste() {
         when(mesaRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -83,7 +83,7 @@ class MesaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ abrirCuenta — cambia a OCUPADA")
+    @DisplayName("abrirCuenta — cambia a OCUPADA")
     void abrirCuenta_ok() {
         MesaEntity entity = entity(1L, 1, false);
         MesaEntity actualizada = entity(1L, 1, true);
@@ -101,7 +101,7 @@ class MesaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ eliminar — con cuenta abierta lanza excepción")
+    @DisplayName("eliminar — con cuenta abierta lanza excepción")
     void eliminar_conCuenta_lanza() {
         MesaEntity entity = entity(1L, 1, true);
         Mesa dominio = Mesa.builder().id(1L).numero(1).cuentaAbierta(true).build();

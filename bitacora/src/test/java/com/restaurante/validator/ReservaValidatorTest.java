@@ -36,7 +36,7 @@ class ReservaValidatorTest {
     // ─── validarSinConflictoHorario ──────────────────────────────────
 
     @Test
-    @DisplayName("✅ sin conflicto — no hay reservas cercanas")
+    @DisplayName("sin conflicto — no hay reservas cercanas")
     void sinConflicto_noLanza() {
         LocalDateTime fecha = LocalDateTime.now().plusDays(1);
         Reserva nueva = reserva(1L, fecha, EstadoReserva.PENDIENTE);
@@ -49,7 +49,7 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ conflicto — ya hay reserva cercana")
+    @DisplayName("conflicto — ya hay reserva cercana")
     void conflicto_lanza() {
         LocalDateTime fecha = LocalDateTime.now().plusDays(1);
         Reserva nueva = reserva(1L, fecha, EstadoReserva.PENDIENTE);
@@ -69,7 +69,7 @@ class ReservaValidatorTest {
     // ─── validarComensalesContraCapacidad ────────────────────────────
 
     @Test
-    @DisplayName("✅ comensales ≤ capacidad no lanza")
+    @DisplayName("comensales ≤ capacidad no lanza")
     void comensales_dentroCapacidad_noLanza() {
         Reserva r = reserva(1L, LocalDateTime.now(), EstadoReserva.PENDIENTE);
         r.setComensales(4);
@@ -78,7 +78,7 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ comensales > capacidad lanza")
+    @DisplayName("comensales > capacidad lanza")
     void comensales_exceden_lanza() {
         Reserva r = reserva(1L, LocalDateTime.now(), EstadoReserva.PENDIENTE);
         r.setComensales(10);
@@ -90,7 +90,7 @@ class ReservaValidatorTest {
     // ─── validarTransicion ───────────────────────────────────────────
 
     @Test
-    @DisplayName("❌ transición inválida lanza")
+    @DisplayName("transición inválida lanza")
     void transicion_invalida_lanza() {
         Reserva r = reserva(1L, LocalDateTime.now(), EstadoReserva.COMPLETADA);
 
@@ -99,7 +99,7 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ transición válida no lanza")
+    @DisplayName("transición válida no lanza")
     void transicion_valida_noLanza() {
         Reserva r = reserva(1L, LocalDateTime.now(), EstadoReserva.PENDIENTE);
 
@@ -110,7 +110,7 @@ class ReservaValidatorTest {
     // ─── validarCancelable ───────────────────────────────────────────
 
     @Test
-    @DisplayName("❌ cancelar completada lanza")
+    @DisplayName("cancelar completada lanza")
     void cancelar_completada_lanza() {
         Reserva r = reserva(1L, LocalDateTime.now(), EstadoReserva.COMPLETADA);
 
@@ -119,7 +119,7 @@ class ReservaValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ cancelar pendiente no lanza")
+    @DisplayName("cancelar pendiente no lanza")
     void cancelar_pendiente_noLanza() {
         Reserva r = reserva(1L, LocalDateTime.now(), EstadoReserva.PENDIENTE);
 

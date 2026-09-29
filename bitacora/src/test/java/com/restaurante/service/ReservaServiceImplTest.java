@@ -51,7 +51,7 @@ class ReservaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ crear — reserva válida queda PENDIENTE")
+    @DisplayName("crear — reserva válida queda PENDIENTE")
     void crear_valida_ok() {
         when(mesaService.obtenerPorId(3L)).thenReturn(mesaCapacidad6());
 
@@ -72,7 +72,7 @@ class ReservaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ obtenerPorId — no existe lanza")
+    @DisplayName("obtenerPorId — no existe lanza")
     void obtenerPorId_noExiste() {
         when(reservaRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -80,7 +80,7 @@ class ReservaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ cambiarEstado — transición válida")
+    @DisplayName("cambiarEstado — transición válida")
     void cambiarEstado_valido() {
         ReservaEntity entity = ReservaEntity.builder()
                 .id(1L).idMesa(3L).estado(EstadoReserva.PENDIENTE).build();
@@ -100,7 +100,7 @@ class ReservaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ cancelar — completada lanza")
+    @DisplayName("cancelar — completada lanza")
     void cancelar_completada_lanza() {
         ReservaEntity entity = ReservaEntity.builder()
                 .id(1L).estado(EstadoReserva.COMPLETADA).build();
@@ -115,7 +115,7 @@ class ReservaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerTodas — lista vacía")
+    @DisplayName("obtenerTodas — lista vacía")
     void obtenerTodas_vacio() {
         when(reservaRepository.findAll()).thenReturn(List.of());
 

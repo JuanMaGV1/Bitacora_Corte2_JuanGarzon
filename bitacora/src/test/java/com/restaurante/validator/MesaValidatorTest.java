@@ -23,7 +23,7 @@ class MesaValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ validarNumeroUnico — número nuevo no lanza")
+    @DisplayName("validarNumeroUnico — número nuevo no lanza")
     void validarNumeroUnico_nuevo_noLanza() {
         when(mesaRepository.existsByNumero(5)).thenReturn(false);
 
@@ -31,7 +31,7 @@ class MesaValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarNumeroUnico — duplicado lanza excepción")
+    @DisplayName("validarNumeroUnico — duplicado lanza excepción")
     void validarNumeroUnico_duplicado_lanza() {
         when(mesaRepository.existsByNumero(1)).thenReturn(true);
 
@@ -40,7 +40,7 @@ class MesaValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarAperturaCuenta — ya abierta lanza excepción")
+    @DisplayName("validarAperturaCuenta — ya abierta lanza excepción")
     void validarAperturaCuenta_yaAbierta_lanza() {
         Mesa m = Mesa.builder().numero(1).cuentaAbierta(true)
                 .estado(EstadoMesa.OCUPADA).build();
@@ -50,7 +50,7 @@ class MesaValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ validarAperturaCuenta — cerrada no lanza")
+    @DisplayName("validarAperturaCuenta — cerrada no lanza")
     void validarAperturaCuenta_cerrada_noLanza() {
         Mesa m = Mesa.builder().numero(1).cuentaAbierta(false)
                 .estado(EstadoMesa.DISPONIBLE).build();
@@ -59,7 +59,7 @@ class MesaValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarCierreCuenta — sin cuenta lanza excepción")
+    @DisplayName("validarCierreCuenta — sin cuenta lanza excepción")
     void validarCierreCuenta_sinCuenta_lanza() {
         Mesa m = Mesa.builder().numero(1).cuentaAbierta(false).build();
 
@@ -68,7 +68,7 @@ class MesaValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ validarCierreCuenta — con cuenta no lanza")
+    @DisplayName("validarCierreCuenta — con cuenta no lanza")
     void validarCierreCuenta_conCuenta_noLanza() {
         Mesa m = Mesa.builder().numero(1).cuentaAbierta(true)
                 .estado(EstadoMesa.OCUPADA).build();

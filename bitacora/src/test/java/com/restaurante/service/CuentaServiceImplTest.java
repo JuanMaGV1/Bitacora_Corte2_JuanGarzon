@@ -38,7 +38,7 @@ class CuentaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ abrir — crea cuenta ABIERTA")
+    @DisplayName("abrir — crea cuenta ABIERTA")
     void abrir_ok() {
         CuentaEntity guardada = CuentaEntity.builder()
                 .id(1L).idMesa(3L).total(0.0)
@@ -58,7 +58,7 @@ class CuentaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ obtenerPorId — no existe lanza excepción")
+    @DisplayName("obtenerPorId — no existe lanza excepción")
     void obtenerPorId_noExiste() {
         when(cuentaRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -66,7 +66,7 @@ class CuentaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ cerrar — cuenta cerrada lanza excepción")
+    @DisplayName("cerrar — cuenta cerrada lanza excepción")
     void cerrar_yaCerrada_lanza() {
         CuentaEntity entity = CuentaEntity.builder()
                 .id(1L).idMesa(3L).estado(EstadoCuenta.CERRADA)
@@ -78,7 +78,7 @@ class CuentaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ cerrar — sin pedidos activos cierra")
+    @DisplayName("cerrar — sin pedidos activos cierra")
     void cerrar_sinActivos_ok() {
         CuentaEntity entity = CuentaEntity.builder()
                 .id(1L).idMesa(3L).estado(EstadoCuenta.ABIERTA)

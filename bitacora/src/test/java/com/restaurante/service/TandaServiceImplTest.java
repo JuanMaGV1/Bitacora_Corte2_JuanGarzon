@@ -49,7 +49,7 @@ class TandaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ crear — tanda válida con 3 rolls")
+    @DisplayName("crear — tanda válida con 3 rolls")
     void crear_valida_ok() {
         when(platoService.obtenerPorId(1L)).thenReturn(roll(1L, "California", true));
         when(platoService.obtenerPorId(2L)).thenReturn(roll(2L, "Spicy Tuna", true));
@@ -72,21 +72,21 @@ class TandaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ crear — 7 rolls lanza TandaExcedidaException")
+    @DisplayName("crear — 7 rolls lanza TandaExcedidaException")
     void crear_sieteRolls_lanza() {
         assertThrows(TandaExcedidaException.class,
                 () -> service.crear(List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L)));
     }
 
     @Test
-    @DisplayName("❌ crear — lista vacía lanza IllegalArgumentException")
+    @DisplayName("crear — lista vacía lanza IllegalArgumentException")
     void crear_vacia_lanza() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.crear(List.of()));
     }
 
     @Test
-    @DisplayName("❌ crear — roll inexistente lanza PlatoNotFoundException")
+    @DisplayName("crear — roll inexistente lanza PlatoNotFoundException")
     void crear_idInexistente_lanza() {
         when(platoService.obtenerPorId(999L))
                 .thenThrow(new PlatoNotFoundException("Plato", 999L));
@@ -96,7 +96,7 @@ class TandaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ crear — plato no ROLL lanza NoEsRollException")
+    @DisplayName("crear — plato no ROLL lanza NoEsRollException")
     void crear_noRoll_lanza() {
         when(platoService.obtenerPorId(1L)).thenReturn(roll(1L, "California", true));
         when(platoService.obtenerPorId(2L)).thenReturn(noRoll(2L, "Té verde", "BEBIDA"));
@@ -106,7 +106,7 @@ class TandaServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ crear — roll agotado lanza IllegalArgumentException")
+    @DisplayName("crear — roll agotado lanza IllegalArgumentException")
     void crear_agotado_lanza() {
         when(platoService.obtenerPorId(1L)).thenReturn(roll(1L, "Sashimi", false));
 
@@ -115,7 +115,7 @@ class TandaServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerTodas — lista vacía al inicio")
+    @DisplayName("obtenerTodas — lista vacía al inicio")
     void obtenerTodas_vacio() {
         when(tandaRepository.findAll()).thenReturn(List.of());
 

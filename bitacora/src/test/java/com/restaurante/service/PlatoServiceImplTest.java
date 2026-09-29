@@ -46,7 +46,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ crear — guarda el plato en BD")
+    @DisplayName("crear — guarda el plato en BD")
     void crear_platoCorrecto_guarda() {
         Plato entrada = plato("California Roll", 18000.0);
         PlatoEntity entityGuardada = entity(1L, "California Roll", 18000.0);
@@ -66,7 +66,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ crear — nombre duplicado lanza excepción")
+    @DisplayName("crear — nombre duplicado lanza excepción")
     void crear_nombreDuplicado_lanza() {
         doThrow(new PlatoAlreadyExistsException("duplicado"))
                 .when(validator).validarNombreUnico(any());
@@ -76,7 +76,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ obtenerPorId — no existe lanza PlatoNotFoundException")
+    @DisplayName("obtenerPorId — no existe lanza PlatoNotFoundException")
     void obtenerPorId_noExiste_lanza() {
         when(platoRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -84,7 +84,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerPorId — existe devuelve dominio")
+    @DisplayName("obtenerPorId — existe devuelve dominio")
     void obtenerPorId_existe_devuelve() {
         PlatoEntity entity = entity(1L, "Sashimi", 25000.0);
         Plato dominio = Plato.builder().id(1L).nombre("Sashimi").precio(25000.0).build();
@@ -98,7 +98,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerTodos — devuelve lista")
+    @DisplayName("obtenerTodos — devuelve lista")
     void obtenerTodos_devuelveLista() {
         PlatoEntity e1 = entity(1L, "A", 1000.0);
         PlatoEntity e2 = entity(2L, "B", 2000.0);
@@ -112,14 +112,14 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerTodos — lista vacía")
+    @DisplayName("obtenerTodos — lista vacía")
     void obtenerTodos_vacio() {
         when(platoRepository.findAll()).thenReturn(List.of());
         assertTrue(service.obtenerTodos().isEmpty());
     }
 
     @Test
-    @DisplayName("✅ obtenerDisponibles — filtra por repository")
+    @DisplayName("obtenerDisponibles — filtra por repository")
     void obtenerDisponibles_filtra() {
         PlatoEntity e1 = entity(1L, "A", 1000.0);
         when(platoRepository.findByDisponibleTrue()).thenReturn(List.of(e1));
@@ -129,7 +129,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ eliminar — no existe lanza excepción")
+    @DisplayName("eliminar — no existe lanza excepción")
     void eliminar_noExiste_lanza() {
         when(platoRepository.existsById(999L)).thenReturn(false);
 
@@ -137,7 +137,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ eliminar — existe borra del repository")
+    @DisplayName("eliminar — existe borra del repository")
     void eliminar_existe_borra() {
         when(platoRepository.existsById(1L)).thenReturn(true);
 
@@ -147,7 +147,7 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ actualizar — modifica los campos")
+    @DisplayName("actualizar — modifica los campos")
     void actualizar_modifica() {
         PlatoEntity existente = entity(1L, "Original", 1000.0);
         Plato nuevosDatos = Plato.builder()

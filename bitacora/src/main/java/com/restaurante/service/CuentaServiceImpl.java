@@ -68,7 +68,7 @@ public class CuentaServiceImpl implements CuentaService {
         return entityMapper.toDomain(guardada);
     }
 
-    @Override
+    @Override 
     @Transactional
     public Cuenta agregarPedido(Long idCuenta, Long idPedido) {
         CuentaEntity cuenta = cuentaRepository.findById(idCuenta)
@@ -81,10 +81,10 @@ public class CuentaServiceImpl implements CuentaService {
 
         Pedido pedido = pedidoService.obtenerPorId(idPedido);
 
-        // ✅ Agrega el pedido a la lista
+        // Agrega el pedido a la lista
         cuenta.getIdsPedidos().add(idPedido);
 
-        // ✅ SUMA EL TOTAL del pedido al total de la cuenta
+        // SUMA EL TOTAL del pedido al total de la cuenta
         double totalPedido = pedido.calcularTotal();
         cuenta.setTotal(cuenta.getTotal() + totalPedido);
 

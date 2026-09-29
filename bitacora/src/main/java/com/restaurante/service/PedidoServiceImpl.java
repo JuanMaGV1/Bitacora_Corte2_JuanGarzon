@@ -1,5 +1,6 @@
 package com.restaurante.service;
 
+import com.restaurante.exception.CuentaNotFoundException;
 import com.restaurante.exception.EstadoInvalidoException;
 import com.restaurante.exception.MesaNotFoundException;
 import com.restaurante.exception.PedidoNoModificableException;
@@ -12,56 +13,70 @@ import com.restaurante.persistence.entity.PedidoEntity;
 import com.restaurante.repository.MesaRepository;
 import com.restaurante.repository.PedidoRepository;
 import com.restaurante.validator.PedidoValidator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
 
-        private final PedidoRepository     pedidoRepository;
-        private final MesaRepository       mesaRepository;
-        private final PedidoEntityMapper   entityMapper;
-        private final PlatoService         platoService;
-        private final PedidoValidator      validator;
+    private final PedidoRepository   pedidoRepository;
+    private final MesaRepository     mesaRepository;
+    private final PedidoEntityMapper entityMapper;
+    private final PlatoService       platoService;
+    private final PedidoValidator    validator;
+    private final CuentaService      cuentaService;
+
+    // Constructor manual con @Lazy para romper el ciclo Pedido ↔ Cuenta
+    public PedidoServiceImpl(PedidoRepository pedidoRepository,
+                             MesaRepository mesaRepository,
+                             PedidoEntityMapper entityMapper,
+                             PlatoService platoService,
+                             PedidoValidator validator,
+                             @Lazy CuentaService cuentaService) {
+        this.pedidoRepository = pedidoRepository;
+        this.mesaRepository   = mesaRepository;
+        this.entityMapper     = entityMapper;
+        this.platoService     = platoService;
+        this.validator        = validator;
+        this.cuentaService    = cuentaService;
+    }
 
     // ─── LECTURA ────────────────────────────────────────────────────────
 
-        @Override
-        public List<Pedido> obtenerTodos() {
+    @Override
+    public List<Pedido> obtenerTodos() {
         return pedidoRepository.findAllWithItems().stream()
                 .map(entityMapper::toDomain)
                 .toList();
-        }
+    }
 
-        @Override
-        public List<Pedido> obtenerActivos() {
+    @Override
+    public List<Pedido> obtenerActivos() {
         return pedidoRepository.findByEstadoNotInWithItems(
                 List.of(EstadoPedido.ENTREGADO, EstadoPedido.CANCELADO)
         ).stream().map(entityMapper::toDomain).toList();
-        }
+    }
 
-        @Override
-        public List<Pedido> obtenerPorMesa(Long idMesa) {
+    @Override
+    public List<Pedido> obtenerPorMesa(Long idMesa) {
         return pedidoRepository.findByMesaIdWithItems(idMesa).stream()
                 .map(entityMapper::toDomain)
                 .toList();
-        }
+    }
 
-        @Override
-        public Pedido obtenerPorId(Long id) {
+    @Override
+    public Pedido obtenerPorId(Long id) {
         return pedidoRepository.findByIdWithItems(id)
                 .map(entityMapper::toDomain)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", id));
-        }
+    }
 
-    // ─── SS-05: CONFIRMAR ──────────────────────────────────────────────
+    // ─── SS-05: CONFIRMAR (con auto-agregar a cuenta) ───────────────────
 
     @Override
     @Transactional
@@ -102,6 +117,20 @@ public class PedidoServiceImpl implements PedidoService {
         PedidoEntity guardado = pedidoRepository.save(pedido);
         log.info("Pedido #{} creado para mesa {} — {} items",
                 guardado.getId(), idMesa, guardado.getItems().size());
+
+        // Agregar automáticamente a la cuenta abierta de la mesa
+        try {
+            Cuenta cuenta = cuentaService.obtenerPorMesa(idMesa);
+            cuentaService.agregarPedido(cuenta.getId(), guardado.getId());
+            log.info("Pedido #{} agregado automáticamente a cuenta #{}",
+                    guardado.getId(), cuenta.getId());
+        } catch (CuentaNotFoundException e) {
+            // No debería pasar porque validamos cuentaAbierta arriba,
+            // pero por si acaso lo logueamos sin romper el flujo
+            log.warn("La mesa {} tiene cuentaAbierta=true pero no se encontró la cuenta",
+                    idMesa);
+        }
+
         return entityMapper.toDomain(guardado);
     }
 
@@ -110,7 +139,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public Pedido agregarItem(Long idPedido, Long idPlato, Integer cantidad) {
-        PedidoEntity pedido = pedidoRepository.findById(idPedido)
+        PedidoEntity pedido = pedidoRepository.findByIdWithItems(idPedido)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", idPedido));
 
         validator.validarModificable(entityMapper.toDomain(pedido));
@@ -121,7 +150,6 @@ public class PedidoServiceImpl implements PedidoService {
                     "El plato '" + plato.getNombre() + "' no está disponible");
         }
 
-        // Si ya existe, incrementa cantidad
         boolean existe = pedido.getItems().stream()
                 .anyMatch(i -> i.getIdPlato().equals(idPlato));
 
@@ -148,7 +176,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public Pedido modificarItem(Long idPedido, Long idPlato, Integer nuevaCantidad) {
-        PedidoEntity pedido = pedidoRepository.findById(idPedido)
+        PedidoEntity pedido = pedidoRepository.findByIdWithItems(idPedido)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", idPedido));
 
         validator.validarModificable(entityMapper.toDomain(pedido));
@@ -173,7 +201,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public Pedido quitarItem(Long idPedido, Long idPlato) {
-        PedidoEntity pedido = pedidoRepository.findById(idPedido)
+        PedidoEntity pedido = pedidoRepository.findByIdWithItems(idPedido)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", idPedido));
 
         validator.validarModificable(entityMapper.toDomain(pedido));
@@ -191,7 +219,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public Pedido cambiarEstado(Long id, EstadoPedido nuevoEstado) {
-        PedidoEntity pedido = pedidoRepository.findById(id)
+        PedidoEntity pedido = pedidoRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", id));
 
         validator.validarTransicion(entityMapper.toDomain(pedido), nuevoEstado);
@@ -204,7 +232,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public void cancelar(Long id) {
-        PedidoEntity pedido = pedidoRepository.findById(id)
+        PedidoEntity pedido = pedidoRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", id));
 
         Pedido dominio = entityMapper.toDomain(pedido);

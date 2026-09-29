@@ -59,15 +59,6 @@ public class CuentaController {
                 .body(cuentaMapper.toResponse(cuenta));
     }
 
-    @PostMapping("/{id}/pedidos/{idPedido}")
-    @Operation(summary = "Agregar un pedido a la cuenta")
-    public ResponseEntity<CuentaResponseDTO> agregarPedido(
-            @PathVariable Long id,
-            @PathVariable Long idPedido) {
-        Cuenta cuenta = cuentaService.agregarPedido(id, idPedido);
-        return ResponseEntity.ok(cuentaMapper.toResponse(cuenta));
-    }
-
     @PatchMapping("/{id}/cerrar")
     @Operation(summary = "Cerrar cuenta y registrar pago")
     @ApiResponse(responseCode = "200", description = "Cuenta cerrada")

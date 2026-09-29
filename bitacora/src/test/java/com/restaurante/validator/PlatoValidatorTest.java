@@ -23,7 +23,7 @@ class PlatoValidatorTest {
     // ─── validarNombreUnico ──────────────────────────────────────────
 
     @Test
-    @DisplayName("✅ validarNombreUnico — nombre nuevo no lanza")
+    @DisplayName("validarNombreUnico — nombre nuevo no lanza")
     void validarNombreUnico_nombreNuevo_noLanza() {
         when(platoRepository.existsByNombreIgnoreCase("California Roll")).thenReturn(false);
 
@@ -31,7 +31,7 @@ class PlatoValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarNombreUnico — duplicado lanza PlatoAlreadyExistsException")
+    @DisplayName("validarNombreUnico — duplicado lanza PlatoAlreadyExistsException")
     void validarNombreUnico_duplicado_lanza() {
         when(platoRepository.existsByNombreIgnoreCase("Ajiaco")).thenReturn(true);
 
@@ -45,7 +45,7 @@ class PlatoValidatorTest {
     // ─── validarNombreUnicoExcluyendo ────────────────────────────────
 
     @Test
-    @DisplayName("✅ validarNombreUnicoExcluyendo — nombre único no lanza")
+    @DisplayName("validarNombreUnicoExcluyendo — nombre único no lanza")
     void validarNombreUnicoExcluyendo_unico_noLanza() {
         when(platoRepository.existsByNombreIgnoreCaseAndIdNot("Sashimi", 1L)).thenReturn(false);
 
@@ -53,7 +53,7 @@ class PlatoValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarNombreUnicoExcluyendo — duplicado lanza")
+    @DisplayName("validarNombreUnicoExcluyendo — duplicado lanza")
     void validarNombreUnicoExcluyendo_duplicado_lanza() {
         when(platoRepository.existsByNombreIgnoreCaseAndIdNot("Sashimi", 1L)).thenReturn(true);
 
@@ -64,26 +64,26 @@ class PlatoValidatorTest {
     // ─── validarPrecioRazonable ──────────────────────────────────────
 
     @Test
-    @DisplayName("✅ validarPrecioRazonable — precio normal no lanza")
+    @DisplayName("validarPrecioRazonable — precio normal no lanza")
     void validarPrecio_normal_noLanza() {
         assertDoesNotThrow(() -> validator.validarPrecioRazonable(28000.0));
     }
 
     @Test
-    @DisplayName("❌ validarPrecioRazonable — precio excesivo lanza")
+    @DisplayName("validarPrecioRazonable — precio excesivo lanza")
     void validarPrecio_excesivo_lanza() {
         assertThrows(IllegalArgumentException.class,
                 () -> validator.validarPrecioRazonable(2_000_000.0));
     }
 
     @Test
-    @DisplayName("✅ validarPrecioRazonable — null no lanza")
+    @DisplayName("validarPrecioRazonable — null no lanza")
     void validarPrecio_null_noLanza() {
         assertDoesNotThrow(() -> validator.validarPrecioRazonable(null));
     }
 
     @Test
-    @DisplayName("✅ validarPrecioRazonable — precio en el límite no lanza")
+    @DisplayName("validarPrecioRazonable — precio en el límite no lanza")
     void validarPrecio_enLimite_noLanza() {
         assertDoesNotThrow(() -> validator.validarPrecioRazonable(1_000_000.0));
     }
@@ -91,13 +91,13 @@ class PlatoValidatorTest {
     // ─── validarTandaDeRolls ─────────────────────────────────────────
 
     @Test
-    @DisplayName("✅ validarTandaDeRolls — 6 rolls no lanza")
+    @DisplayName("validarTandaDeRolls — 6 rolls no lanza")
     void validarTanda_6rolls_noLanza() {
         assertDoesNotThrow(() -> validator.validarTandaDeRolls(6));
     }
 
     @Test
-    @DisplayName("❌ validarTandaDeRolls — 7 rolls lanza")
+    @DisplayName("validarTandaDeRolls — 7 rolls lanza")
     void validarTanda_7rolls_lanza() {
         assertThrows(IllegalArgumentException.class,
                 () -> validator.validarTandaDeRolls(7));

@@ -47,7 +47,7 @@ class RegistroVehiculoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ registrarEntrada — crea registro con entrada")
+    @DisplayName("registrarEntrada — crea registro con entrada")
     void registrarEntrada_ok() {
         RegistroVehiculo entrada = RegistroVehiculo.builder().placa("ABC-123").build();
         RegistroVehiculoEntity guardado = entity(1L, "ABC-123", null);
@@ -65,7 +65,7 @@ class RegistroVehiculoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ registrarSalida — calcula cobro")
+    @DisplayName("registrarSalida — calcula cobro")
     void registrarSalida_calcula() {
         RegistroVehiculoEntity activo = entity(1L, "ABC-123", null);
         RegistroVehiculoEntity cerrado = entity(1L, "ABC-123", LocalDateTime.now());
@@ -83,7 +83,7 @@ class RegistroVehiculoServiceImplTest {
     }
 
     @Test
-    @DisplayName("❌ registrarSalida — sin registro activo lanza")
+    @DisplayName("registrarSalida — sin registro activo lanza")
     void registrarSalida_sinActivo_lanza() {
         when(registroRepository.findFirstByPlacaIgnoreCaseAndSalidaIsNull("XXX-999"))
                 .thenReturn(Optional.empty());
@@ -93,7 +93,7 @@ class RegistroVehiculoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ cuposDisponibles — descuenta activos")
+    @DisplayName("cuposDisponibles — descuenta activos")
     void cuposDisponibles_descUenta() {
         when(registroRepository.countActivos()).thenReturn(5L);
 
@@ -101,7 +101,7 @@ class RegistroVehiculoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerTodos — lista vacía")
+    @DisplayName("obtenerTodos — lista vacía")
     void obtenerTodos_vacio() {
         when(registroRepository.findAll()).thenReturn(List.of());
 

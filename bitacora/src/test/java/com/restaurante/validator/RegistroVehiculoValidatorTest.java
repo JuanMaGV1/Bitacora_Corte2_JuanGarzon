@@ -24,7 +24,7 @@ class RegistroVehiculoValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ validarPlacaNoActiva — placa nueva no lanza")
+    @DisplayName("validarPlacaNoActiva — placa nueva no lanza")
     void placaNueva_noLanza() {
         when(registroRepository.existsByPlacaIgnoreCaseAndSalidaIsNull("ABC-123"))
                 .thenReturn(false);
@@ -33,7 +33,7 @@ class RegistroVehiculoValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarPlacaNoActiva — placa activa lanza excepción")
+    @DisplayName("validarPlacaNoActiva — placa activa lanza excepción")
     void placaActiva_lanza() {
         when(registroRepository.existsByPlacaIgnoreCaseAndSalidaIsNull("ABC-123"))
                 .thenReturn(true);
@@ -43,7 +43,7 @@ class RegistroVehiculoValidatorTest {
     }
 
     @Test
-    @DisplayName("✅ validarCapacidadDisponible — con cupo no lanza")
+    @DisplayName("validarCapacidadDisponible — con cupo no lanza")
     void capacidad_conCupo() {
         when(registroRepository.countActivos()).thenReturn(19L);
 
@@ -51,7 +51,7 @@ class RegistroVehiculoValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarCapacidadDisponible — parqueadero lleno lanza")
+    @DisplayName("validarCapacidadDisponible — parqueadero lleno lanza")
     void capacidad_lleno_lanza() {
         when(registroRepository.countActivos()).thenReturn(20L);
 
@@ -60,7 +60,7 @@ class RegistroVehiculoValidatorTest {
     }
 
     @Test
-    @DisplayName("❌ validarPlacaActiva — sin registro lanza excepción")
+    @DisplayName("validarPlacaActiva — sin registro lanza excepción")
     void placaNoActiva_lanza() {
         when(registroRepository.findFirstByPlacaIgnoreCaseAndSalidaIsNull("XXX-999"))
                 .thenReturn(Optional.empty());

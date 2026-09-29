@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * Intercepta TODAS las excepciones de los Controllers.
  * Devuelve siempre el mismo formato (ErrorResponseDTO).
  *
- * ⚠️ Orden de los handlers: de MÁS específico a MÁS general.
+ *   Orden de los handlers: de MÁS específico a MÁS general.
  *    El @ExceptionHandler(Exception.class) va SIEMPRE al final.
  */
 @Slf4j
