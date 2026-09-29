@@ -13,9 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TandaResponseDTO {
-    private Long             id;
-    private List<Long>       idsRolls;
-    private Integer          cantidad;
-    private LocalDateTime    fechaCreacion;
-    private String           estado;
+    private String        id;        // ← String, no Long (Mongo usa String)
+    private List<Long>    idsRolls;
+    private Integer       cantidad;
+    private LocalDateTime fechaCreacion;
+    private String        estado;
 }

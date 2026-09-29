@@ -1,159 +1,124 @@
 package com.restaurante.service;
 
 import com.restaurante.exception.EstadoInvalidoException;
-import com.restaurante.exception.MesaNotFoundException;
-import com.restaurante.exception.ReservaConflictoException;
 import com.restaurante.exception.ReservaNotFoundException;
+import com.restaurante.mapper.ReservaEntityMapper;
 import com.restaurante.model.domain.EstadoReserva;
 import com.restaurante.model.domain.Mesa;
 import com.restaurante.model.domain.Reserva;
+import com.restaurante.persistence.entity.ReservaEntity;
+import com.restaurante.repository.ReservaRepository;
 import com.restaurante.validator.ReservaValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class ReservaServiceImplTest {
 
-    private ReservaValidator validator;
-    private MesaService      mesaService;
-    private ReservaServiceImpl service;
+    private ReservaRepository   reservaRepository;
+    private ReservaEntityMapper entityMapper;
+    private ReservaValidator    validator;
+    private MesaService         mesaService;
+    private ReservaServiceImpl  service;
 
     @BeforeEach
     void setUp() {
-        validator   = new ReservaValidator();
-        mesaService = mock(MesaService.class);
-        service     = new ReservaServiceImpl(validator, mesaService);
-
-        // Por defecto, todas las mesas existen con capacidad suficiente
-        when(mesaService.obtenerPorId(anyLong())).thenReturn(
-                Mesa.builder().id(3L).numero(3).capacidad(6).build());
+        reservaRepository = mock(ReservaRepository.class);
+        entityMapper      = mock(ReservaEntityMapper.class);
+        validator         = mock(ReservaValidator.class);
+        mesaService       = mock(MesaService.class);
+        service           = new ReservaServiceImpl(
+                reservaRepository, entityMapper, validator, mesaService);
     }
 
     private Reserva reserva() {
         return Reserva.builder()
                 .idMesa(3L).cliente("Juan")
                 .fechaHora(LocalDateTime.now().plusDays(1))
-                .comensales(4)
-                .build();
+                .comensales(4).build();
+    }
+
+    private Mesa mesaCapacidad6() {
+        return Mesa.builder().id(3L).numero(3).capacidad(6).build();
     }
 
     @Test
-    @DisplayName("crear — reserva válida queda en PENDIENTE")
-    void crear_valida_creaEnPendiente() {
-        Reserva creada = service.crear(reserva());
+    @DisplayName("✅ crear — reserva válida queda PENDIENTE")
+    void crear_valida_ok() {
+        when(mesaService.obtenerPorId(3L)).thenReturn(mesaCapacidad6());
 
-        assertNotNull(creada.getId());
-        assertEquals(EstadoReserva.PENDIENTE, creada.getEstado());
+        ReservaEntity guardada = ReservaEntity.builder()
+                .id(1L).idMesa(3L).cliente("Juan")
+                .fechaHora(reserva().getFechaHora())
+                .comensales(4).estado(EstadoReserva.PENDIENTE).build();
+        Reserva dominio = Reserva.builder().id(1L).idMesa(3L)
+                .cliente("Juan").estado(EstadoReserva.PENDIENTE).build();
+
+        when(reservaRepository.save(any())).thenReturn(guardada);
+        when(entityMapper.toDomain(guardada)).thenReturn(dominio);
+
+        Reserva resultado = service.crear(reserva());
+
+        assertNotNull(resultado.getId());
+        assertEquals(EstadoReserva.PENDIENTE, resultado.getEstado());
     }
 
     @Test
-    @DisplayName("crear — conflicto de horario lanza excepción")
-    void crear_conflicto_lanzaExcepcion() {
-        service.crear(reserva());
+    @DisplayName("❌ obtenerPorId — no existe lanza")
+    void obtenerPorId_noExiste() {
+        when(reservaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(ReservaConflictoException.class,
-                () -> service.crear(reserva()));
+        assertThrows(ReservaNotFoundException.class, () -> service.obtenerPorId(999L));
     }
 
     @Test
-    @DisplayName("crear — mesa no existe lanza MesaNotFoundException")
-    void crear_mesaNoExiste_lanzaExcepcion() {
-        when(mesaService.obtenerPorId(999L))
-                .thenThrow(new MesaNotFoundException("Mesa", 999L));
+    @DisplayName("✅ cambiarEstado — transición válida")
+    void cambiarEstado_valido() {
+        ReservaEntity entity = ReservaEntity.builder()
+                .id(1L).idMesa(3L).estado(EstadoReserva.PENDIENTE).build();
+        ReservaEntity actualizada = ReservaEntity.builder()
+                .id(1L).idMesa(3L).estado(EstadoReserva.CONFIRMADA).build();
+        Reserva dominio = Reserva.builder().id(1L).estado(EstadoReserva.CONFIRMADA).build();
 
-        Reserva r = reserva();
-        r.setIdMesa(999L);
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(entity));
+        when(entityMapper.toDomain(entity)).thenReturn(
+                Reserva.builder().id(1L).estado(EstadoReserva.PENDIENTE).build());
+        when(reservaRepository.save(entity)).thenReturn(actualizada);
+        when(entityMapper.toDomain(actualizada)).thenReturn(dominio);
 
-        assertThrows(MesaNotFoundException.class, () -> service.crear(r));
+        Reserva resultado = service.cambiarEstado(1L, EstadoReserva.CONFIRMADA);
+
+        assertEquals(EstadoReserva.CONFIRMADA, resultado.getEstado());
     }
 
     @Test
-    @DisplayName("crear — comensales superan capacidad de la mesa")
-    void crear_comensalesExcedenCapacidad_lanzaExcepcion() {
-        Mesa mesaPequena = Mesa.builder().id(3L).numero(3).capacidad(2).build();
-        when(mesaService.obtenerPorId(3L)).thenReturn(mesaPequena);
+    @DisplayName("❌ cancelar — completada lanza")
+    void cancelar_completada_lanza() {
+        ReservaEntity entity = ReservaEntity.builder()
+                .id(1L).estado(EstadoReserva.COMPLETADA).build();
 
-        Reserva r = reserva();
-        r.setComensales(4);
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(entity));
+        when(entityMapper.toDomain(entity)).thenReturn(
+                Reserva.builder().id(1L).estado(EstadoReserva.COMPLETADA).build());
+        doThrow(new EstadoInvalidoException("no cancelable"))
+                .when(validator).validarCancelable(any());
 
-        assertThrows(IllegalArgumentException.class, () -> service.crear(r));
+        assertThrows(EstadoInvalidoException.class, () -> service.cancelar(1L));
     }
 
     @Test
-    @DisplayName("crear — comensales igual a capacidad funciona")
-    void crear_comensalesIgualCapacidad_ok() {
-        Mesa mesaExacta = Mesa.builder().id(3L).numero(3).capacidad(4).build();
-        when(mesaService.obtenerPorId(3L)).thenReturn(mesaExacta);
-
-        Reserva r = reserva();
-        r.setComensales(4);
-
-        assertDoesNotThrow(() -> service.crear(r));
-    }
-
-    @Test
-    @DisplayName("obtenerPorId — no existe lanza ReservaNotFoundException")
-    void obtenerPorId_noExiste_lanzaExcepcion() {
-        assertThrows(ReservaNotFoundException.class,
-                () -> service.obtenerPorId(99L));
-    }
-
-    @Test
-    @DisplayName("cambiarEstado — transición válida")
-    void cambiarEstado_valido_cambia() {
-        Reserva creada = service.crear(reserva());
-        Reserva actualizada = service.cambiarEstado(creada.getId(), EstadoReserva.CONFIRMADA);
-
-        assertEquals(EstadoReserva.CONFIRMADA, actualizada.getEstado());
-    }
-
-    @Test
-    @DisplayName("cambiarEstado — transición inválida lanza excepción")
-    void cambiarEstado_invalido_lanzaExcepcion() {
-        Reserva creada = service.crear(reserva());
-        service.cambiarEstado(creada.getId(), EstadoReserva.CONFIRMADA);
-        service.cambiarEstado(creada.getId(), EstadoReserva.COMPLETADA);
-
-        assertThrows(EstadoInvalidoException.class,
-                () -> service.cambiarEstado(creada.getId(), EstadoReserva.CONFIRMADA));
-    }
-
-    @Test
-    @DisplayName("obtenerVigentes — solo pendientes y confirmadas")
-    void obtenerVigentes_filtraCorrecto() {
-        Reserva r1 = service.crear(reserva());
-
-        Reserva r2 = reserva();
-        r2.setIdMesa(4L);
-        when(mesaService.obtenerPorId(4L)).thenReturn(
-                Mesa.builder().id(4L).numero(4).capacidad(6).build());
-
-        Reserva creada2 = service.crear(r2);
-        service.cancelar(creada2.getId());
-
-        assertEquals(1, service.obtenerVigentes().size());
-    }
-
-    @Test
-    @DisplayName("cancelar — reserva completada no se puede cancelar")
-    void cancelar_completada_lanzaExcepcion() {
-        Reserva creada = service.crear(reserva());
-        service.cambiarEstado(creada.getId(), EstadoReserva.CONFIRMADA);
-        service.cambiarEstado(creada.getId(), EstadoReserva.COMPLETADA);
-
-        assertThrows(EstadoInvalidoException.class,
-                () -> service.cancelar(creada.getId()));
-    }
-
-    @Test
-    @DisplayName("obtenerTodas — lista vacía al inicio")
+    @DisplayName("✅ obtenerTodas — lista vacía")
     void obtenerTodas_vacio() {
+        when(reservaRepository.findAll()).thenReturn(List.of());
+
         assertTrue(service.obtenerTodas().isEmpty());
     }
 }

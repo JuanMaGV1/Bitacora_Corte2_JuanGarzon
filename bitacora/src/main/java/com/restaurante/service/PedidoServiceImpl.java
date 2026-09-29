@@ -1,212 +1,226 @@
 package com.restaurante.service;
 
 import com.restaurante.exception.EstadoInvalidoException;
-import com.restaurante.exception.MesaNoDisponibleException;
+import com.restaurante.exception.MesaNotFoundException;
+import com.restaurante.exception.PedidoNoModificableException;
 import com.restaurante.exception.PedidoNotFoundException;
+import com.restaurante.mapper.PedidoEntityMapper;
 import com.restaurante.model.domain.*;
+import com.restaurante.persistence.entity.ItemPedidoEntity;
+import com.restaurante.persistence.entity.MesaEntity;
+import com.restaurante.persistence.entity.PedidoEntity;
+import com.restaurante.repository.MesaRepository;
+import com.restaurante.repository.PedidoRepository;
 import com.restaurante.validator.PedidoValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
 
-    private final Map<Long, Pedido> pedidos  = new ConcurrentHashMap<>();
-    private final AtomicLong        contador = new AtomicLong(1);
-
-    private final PlatoService    platoService;   // reutiliza
-    private final PedidoValidator validator;
-    private final MesaService mesaService;
+        private final PedidoRepository     pedidoRepository;
+        private final MesaRepository       mesaRepository;
+        private final PedidoEntityMapper   entityMapper;
+        private final PlatoService         platoService;
+        private final PedidoValidator      validator;
 
     // ─── LECTURA ────────────────────────────────────────────────────────
 
-    @Override
-    public List<Pedido> obtenerTodos() {
-        return pedidos.values().stream().toList();
-    }
-
-    @Override
-    public List<Pedido> obtenerActivos() {
-        return pedidos.values().stream()
-                .filter(p -> !p.getEstado().esTerminal())
+        @Override
+        public List<Pedido> obtenerTodos() {
+        return pedidoRepository.findAllWithItems().stream()
+                .map(entityMapper::toDomain)
                 .toList();
-    }
+        }
 
-    @Override
-    public List<Pedido> obtenerPorMesa(Long idMesa) {
-        return pedidos.values().stream()
-                .filter(p -> p.getIdMesa().equals(idMesa))
+        @Override
+        public List<Pedido> obtenerActivos() {
+        return pedidoRepository.findByEstadoNotInWithItems(
+                List.of(EstadoPedido.ENTREGADO, EstadoPedido.CANCELADO)
+        ).stream().map(entityMapper::toDomain).toList();
+        }
+
+        @Override
+        public List<Pedido> obtenerPorMesa(Long idMesa) {
+        return pedidoRepository.findByMesaIdWithItems(idMesa).stream()
+                .map(entityMapper::toDomain)
                 .toList();
-    }
+        }
 
-    @Override
-    public Pedido obtenerPorId(Long id) {
-        return pedidos.values().stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
+        @Override
+        public Pedido obtenerPorId(Long id) {
+        return pedidoRepository.findByIdWithItems(id)
+                .map(entityMapper::toDomain)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido", id));
-    }
+        }
 
     // ─── SS-05: CONFIRMAR ──────────────────────────────────────────────
 
     @Override
+    @Transactional
     public Pedido confirmar(Long idMesa, List<Long> idPlatos, String notas) {
-        log.info("Confirmando pedido para mesa {} con {} rolls", idMesa, idPlatos.size());
+        // 1. La mesa debe existir
+        MesaEntity mesaEntity = mesaRepository.findById(idMesa)
+                .orElseThrow(() -> new MesaNotFoundException("Mesa", idMesa));
 
-        // ─── Validación 1: la mesa debe existir ─────────────────────
-        Mesa mesa = mesaService.obtenerPorId(idMesa);   // lanza 404 si no existe
-
-        // ─── Validación 2: la mesa debe tener cuenta abierta ────────
-        if (!mesa.tieneCuentaAbierta()) {
-            log.warn("Intento de pedido en mesa {} sin cuenta abierta", idMesa);
-            throw new MesaNoDisponibleException(
-                    "No se puede crear un pedido en la mesa " + mesa.getNumero()
+        // 2. La mesa debe tener cuenta abierta
+        if (!Boolean.TRUE.equals(mesaEntity.getCuentaAbierta())) {
+            throw new EstadoInvalidoException(
+                    "No se puede crear un pedido en la mesa " + mesaEntity.getNumero()
                     + " porque no tiene cuenta abierta");
         }
 
-        // ─── Validación 3: los platos existen y están disponibles ───
-        List<ItemPedido> items = idPlatos.stream()
-                .map(idPlato -> {
-                    Plato plato = platoService.obtenerPorId(idPlato);
-                    if (!plato.estaDisponible()) {
-                        throw new EstadoInvalidoException(
-                                "El plato '" + plato.getNombre() + "' no está disponible");
-                    }
-                    return ItemPedido.builder()
-                            .idPlato(plato.getId())
-                            .nombrePlato(plato.getNombre())
-                            .precioCongelado(plato.getPrecio())
-                            .cantidad(1)
-                            .build();
-                })
-                .toList();
-
-        Pedido pedido = Pedido.builder()
-                .id(contador.getAndIncrement())
-                .idMesa(idMesa)
-                .items(new ArrayList<>(items))
+        // 3. Crear pedido + items
+        PedidoEntity pedido = PedidoEntity.builder()
+                .mesa(mesaEntity)
                 .estado(EstadoPedido.RECIBIDO)
-                .timestamp(LocalDateTime.now())
                 .notas(notas)
                 .build();
 
-        pedidos.put(pedido.getId(), pedido);
-        log.info("Pedido #{} enviado a cocina — mesa {} — {} rolls",
-                pedido.getId(), idMesa, pedido.cantidadItems());
-        return pedido;
+        for (Long idPlato : idPlatos) {
+            Plato plato = platoService.obtenerPorId(idPlato);
+            if (!plato.estaDisponible()) {
+                throw new EstadoInvalidoException(
+                        "El plato '" + plato.getNombre() + "' no está disponible");
+            }
+            ItemPedidoEntity item = ItemPedidoEntity.builder()
+                    .idPlato(plato.getId())
+                    .nombrePlato(plato.getNombre())
+                    .precioCongelado(plato.getPrecio())
+                    .cantidad(1)
+                    .build();
+            pedido.addItem(item);
+        }
+
+        PedidoEntity guardado = pedidoRepository.save(pedido);
+        log.info("Pedido #{} creado para mesa {} — {} items",
+                guardado.getId(), idMesa, guardado.getItems().size());
+        return entityMapper.toDomain(guardado);
     }
 
     // ─── SS-02/03/04: MODIFICAR ────────────────────────────────────────
 
     @Override
+    @Transactional
     public Pedido agregarItem(Long idPedido, Long idPlato, Integer cantidad) {
-        Pedido pedido = obtenerPorId(idPedido);
-        validator.validarModificable(pedido);
+        PedidoEntity pedido = pedidoRepository.findById(idPedido)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido", idPedido));
+
+        validator.validarModificable(entityMapper.toDomain(pedido));
 
         Plato plato = platoService.obtenerPorId(idPlato);
         if (!plato.estaDisponible()) {
             throw new EstadoInvalidoException(
-                    "El roll '" + plato.getNombre() + "' no está disponible");
+                    "El plato '" + plato.getNombre() + "' no está disponible");
         }
 
-        // Si ya existe, incrementar cantidad
-        boolean existente = pedido.getItems().stream()
+        // Si ya existe, incrementa cantidad
+        boolean existe = pedido.getItems().stream()
                 .anyMatch(i -> i.getIdPlato().equals(idPlato));
 
-        if (existente) {
+        if (existe) {
             pedido.getItems().stream()
                     .filter(i -> i.getIdPlato().equals(idPlato))
                     .findFirst()
                     .ifPresent(i -> i.setCantidad(i.getCantidad() + cantidad));
         } else {
-            pedido.getItems().add(ItemPedido.builder()
+            ItemPedidoEntity item = ItemPedidoEntity.builder()
                     .idPlato(plato.getId())
                     .nombrePlato(plato.getNombre())
                     .precioCongelado(plato.getPrecio())
                     .cantidad(cantidad)
-                    .build());
+                    .build();
+            pedido.addItem(item);
         }
 
         log.info("Item agregado al pedido #{}: plato={} cantidad={}",
                 idPedido, plato.getNombre(), cantidad);
-        return pedido;
+        return entityMapper.toDomain(pedidoRepository.save(pedido));
     }
 
     @Override
+    @Transactional
     public Pedido modificarItem(Long idPedido, Long idPlato, Integer nuevaCantidad) {
-        Pedido pedido = obtenerPorId(idPedido);
-        validator.validarModificable(pedido);
+        PedidoEntity pedido = pedidoRepository.findById(idPedido)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido", idPedido));
 
-        ItemPedido item = pedido.getItems().stream()
+        validator.validarModificable(entityMapper.toDomain(pedido));
+
+        ItemPedidoEntity item = pedido.getItems().stream()
                 .filter(i -> i.getIdPlato().equals(idPlato))
                 .findFirst()
                 .orElseThrow(() -> new PedidoNotFoundException(
-                        "Item del pedido con idPlato=" + idPlato, idPedido));
+                        "Item con idPlato=" + idPlato, idPedido));
 
         if (nuevaCantidad <= 0) {
             pedido.getItems().remove(item);
-            log.info("Item eliminado del pedido #{} (cantidad 0): plato={}", idPedido, idPlato);
+            log.info("Item eliminado de pedido #{}: plato={}", idPedido, idPlato);
         } else {
             item.setCantidad(nuevaCantidad);
             log.info("Item modificado en pedido #{}: plato={} cantidad={}",
                     idPedido, idPlato, nuevaCantidad);
         }
-        return pedido;
+        return entityMapper.toDomain(pedidoRepository.save(pedido));
     }
 
     @Override
+    @Transactional
     public Pedido quitarItem(Long idPedido, Long idPlato) {
-        Pedido pedido = obtenerPorId(idPedido);
-        validator.validarModificable(pedido);
+        PedidoEntity pedido = pedidoRepository.findById(idPedido)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido", idPedido));
+
+        validator.validarModificable(entityMapper.toDomain(pedido));
 
         boolean removed = pedido.getItems().removeIf(i -> i.getIdPlato().equals(idPlato));
         if (!removed) {
-            throw new PedidoNotFoundException(
-                    "Item del pedido con idPlato=" + idPlato, idPedido);
+            throw new PedidoNotFoundException("Item con idPlato=" + idPlato, idPedido);
         }
-        log.info("Item quitado del pedido #{}: plato={}", idPedido, idPlato);
-        return pedido;
+        log.info("Item quitado de pedido #{}: plato={}", idPedido, idPlato);
+        return entityMapper.toDomain(pedidoRepository.save(pedido));
     }
 
     // ─── SS-06: CAMBIAR ESTADO ─────────────────────────────────────────
 
     @Override
+    @Transactional
     public Pedido cambiarEstado(Long id, EstadoPedido nuevoEstado) {
-        Pedido pedido = obtenerPorId(id);
-        validator.validarTransicion(pedido, nuevoEstado);
+        PedidoEntity pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido", id));
+
+        validator.validarTransicion(entityMapper.toDomain(pedido), nuevoEstado);
 
         pedido.setEstado(nuevoEstado);
         log.info("Pedido #{} → {}", id, nuevoEstado);
-        return pedido;
+        return entityMapper.toDomain(pedidoRepository.save(pedido));
     }
 
     @Override
+    @Transactional
     public void cancelar(Long id) {
-        Pedido pedido = obtenerPorId(id);
-        if (!pedido.getEstado().esCancelable()) {
+        PedidoEntity pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido", id));
+
+        Pedido dominio = entityMapper.toDomain(pedido);
+        if (!dominio.getEstado().esCancelable()) {
             throw new EstadoInvalidoException(
-                    "Un pedido en estado " + pedido.getEstado() + " no puede cancelarse");
+                    "Un pedido en estado " + dominio.getEstado() + " no puede cancelarse");
         }
         pedido.setEstado(EstadoPedido.CANCELADO);
+        pedidoRepository.save(pedido);
         log.info("Pedido #{} cancelado", id);
     }
 
+    // ─── Verificar si un plato está en pedidos activos ─────────────────
+
     @Override
     public boolean tienePedidosActivosConPlato(Long idPlato) {
-        return pedidos.values().stream()
-                .filter(p -> p.getEstado() != EstadoPedido.ENTREGADO
-                        && p.getEstado() != EstadoPedido.CANCELADO)
-                .flatMap(p -> p.getItems().stream())
-                .anyMatch(item -> item.getIdPlato().equals(idPlato));
+        return pedidoRepository.existsActivePedidoConPlato(idPlato);
     }
 }

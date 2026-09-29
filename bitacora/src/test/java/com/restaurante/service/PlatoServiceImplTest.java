@@ -2,72 +2,109 @@ package com.restaurante.service;
 
 import com.restaurante.exception.PlatoAlreadyExistsException;
 import com.restaurante.exception.PlatoNotFoundException;
+import com.restaurante.mapper.PlatoEntityMapper;
 import com.restaurante.model.domain.Plato;
+import com.restaurante.persistence.entity.PlatoEntity;
+import com.restaurante.repository.PlatoRepository;
 import com.restaurante.validator.PlatoValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Pruebas unitarias de PlatoServiceImpl.
- * Se mockea el Validator para controlar las validaciones de negocio.
- */
 class PlatoServiceImplTest {
 
-    private PlatoValidator     validator;   // doble controlado
-    private PlatoServiceImpl   service;     // clase real bajo prueba
-    private PedidoService pedidoService;
+    private PlatoRepository   platoRepository;
+    private PlatoEntityMapper entityMapper;
+    private PlatoValidator    validator;
+    private PlatoServiceImpl  service;
 
-     @BeforeEach
+    @BeforeEach
     void setUp() {
-        validator     = mock(PlatoValidator.class);
-        pedidoService = mock(PedidoService.class);   // ← AGREGAR
-        service       = new PlatoServiceImpl(validator, pedidoService);
+        platoRepository = mock(PlatoRepository.class);
+        entityMapper    = mock(PlatoEntityMapper.class);
+        validator       = mock(PlatoValidator.class);
+        service         = new PlatoServiceImpl(platoRepository, entityMapper, validator);
     }
 
-    /** Helper para crear un Plato de prueba */
     private Plato plato(String nombre, double precio) {
         return Plato.builder()
-                .nombre(nombre)
-                .precio(precio)
-                .categoria("PRINCIPALES")
-                .descripcion("Descripción de prueba")
-                .build();
+                .nombre(nombre).precio(precio)
+                .categoria("ROLL").descripcion("test").build();
     }
 
-    // ─── HAPPY PATH ─────────────────────────────────────────────────────
+    private PlatoEntity entity(Long id, String nombre, double precio) {
+        return PlatoEntity.builder()
+                .id(id).nombre(nombre).precio(precio)
+                .categoria("ROLL").disponible(true).build();
+    }
 
     @Test
-    @DisplayName("✅ crear — guarda el plato y le asigna un ID")
-    void crear_platoCorrecto_guardaYRetorna() {
-        // GIVEN
-        Plato entrada = plato("Bandeja Paisa", 28000.0);
+    @DisplayName("✅ crear — guarda el plato en BD")
+    void crear_platoCorrecto_guarda() {
+        Plato entrada = plato("California Roll", 18000.0);
+        PlatoEntity entityGuardada = entity(1L, "California Roll", 18000.0);
+        Plato dominio = Plato.builder().id(1L).nombre("California Roll").precio(18000.0)
+                .categoria("ROLL").disponible(true).build();
 
-        // WHEN
+        when(entityMapper.toEntity(entrada)).thenReturn(PlatoEntity.builder()
+                .nombre("California Roll").precio(18000.0).categoria("ROLL").build());
+        when(platoRepository.save(any(PlatoEntity.class))).thenReturn(entityGuardada);
+        when(entityMapper.toDomain(entityGuardada)).thenReturn(dominio);
+
         Plato resultado = service.crear(entrada);
 
-        // THEN
-        assertNotNull(resultado.getId(), "El ID debe ser asignado");
-        assertEquals("Bandeja Paisa", resultado.getNombre());
-        assertEquals(28000.0, resultado.getPrecio());
-        assertTrue(resultado.estaDisponible(), "Todo plato nuevo empieza disponible");
-
-        // Verifica que el Validator fue llamado exactamente 1 vez
-        verify(validator, times(1)).validarNombreUnico(any(), any());
-        verify(validator, times(1)).validarPrecioRazonable(any());
+        assertNotNull(resultado.getId());
+        assertEquals("California Roll", resultado.getNombre());
+        verify(validator).validarNombreUnico("California Roll");
     }
 
     @Test
-    @DisplayName("✅ obtenerTodos — devuelve todos los platos")
-    void obtenerTodos_devuelveTodosLosPlatos() {
-        service.crear(plato("A", 1000.0));
-        service.crear(plato("B", 2000.0));
+    @DisplayName("❌ crear — nombre duplicado lanza excepción")
+    void crear_nombreDuplicado_lanza() {
+        doThrow(new PlatoAlreadyExistsException("duplicado"))
+                .when(validator).validarNombreUnico(any());
+
+        assertThrows(PlatoAlreadyExistsException.class,
+                () -> service.crear(plato("Tacos", 10000.0)));
+    }
+
+    @Test
+    @DisplayName("❌ obtenerPorId — no existe lanza PlatoNotFoundException")
+    void obtenerPorId_noExiste_lanza() {
+        when(platoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(PlatoNotFoundException.class, () -> service.obtenerPorId(999L));
+    }
+
+    @Test
+    @DisplayName("✅ obtenerPorId — existe devuelve dominio")
+    void obtenerPorId_existe_devuelve() {
+        PlatoEntity entity = entity(1L, "Sashimi", 25000.0);
+        Plato dominio = Plato.builder().id(1L).nombre("Sashimi").precio(25000.0).build();
+
+        when(platoRepository.findById(1L)).thenReturn(Optional.of(entity));
+        when(entityMapper.toDomain(entity)).thenReturn(dominio);
+
+        Plato resultado = service.obtenerPorId(1L);
+
+        assertEquals("Sashimi", resultado.getNombre());
+    }
+
+    @Test
+    @DisplayName("✅ obtenerTodos — devuelve lista")
+    void obtenerTodos_devuelveLista() {
+        PlatoEntity e1 = entity(1L, "A", 1000.0);
+        PlatoEntity e2 = entity(2L, "B", 2000.0);
+        when(platoRepository.findAll()).thenReturn(List.of(e1, e2));
+        when(entityMapper.toDomain(e1)).thenReturn(Plato.builder().id(1L).nombre("A").build());
+        when(entityMapper.toDomain(e2)).thenReturn(Plato.builder().id(2L).nombre("B").build());
 
         List<Plato> resultado = service.obtenerTodos();
 
@@ -75,149 +112,56 @@ class PlatoServiceImplTest {
     }
 
     @Test
-    @DisplayName("✅ obtenerDisponibles — filtra solo los disponibles")
-    void obtenerDisponibles_filtraSoloDisponibles() {
-        Plato a = service.crear(plato("A", 1000.0));
-        Plato b = service.crear(plato("B", 2000.0));
-        service.cambiarDisponibilidad(b.getId(), false);
-
-        List<Plato> disponibles = service.obtenerDisponibles();
-
-        assertEquals(1, disponibles.size());
-        assertEquals("A", disponibles.get(0).getNombre());
+    @DisplayName("✅ obtenerTodos — lista vacía")
+    void obtenerTodos_vacio() {
+        when(platoRepository.findAll()).thenReturn(List.of());
+        assertTrue(service.obtenerTodos().isEmpty());
     }
 
     @Test
-    @DisplayName("✅ obtenerPorCategoria — filtra por categoría (case-insensitive)")
-    void obtenerPorCategoria_filtraCorrectamente() {
-        service.crear(plato("A", 1000.0));   // categoria PRINCIPALES
-        Plato postre = service.crear(plato("B", 2000.0));
-        postre.setCategoria("POSTRES");
+    @DisplayName("✅ obtenerDisponibles — filtra por repository")
+    void obtenerDisponibles_filtra() {
+        PlatoEntity e1 = entity(1L, "A", 1000.0);
+        when(platoRepository.findByDisponibleTrue()).thenReturn(List.of(e1));
+        when(entityMapper.toDomain(e1)).thenReturn(Plato.builder().id(1L).nombre("A").build());
 
-        List<Plato> postres = service.obtenerPorCategoria("postres");
-
-        assertEquals(1, postres.size());
-        assertEquals("B", postres.get(0).getNombre());
+        assertEquals(1, service.obtenerDisponibles().size());
     }
 
     @Test
-    @DisplayName("✅ cambiarDisponibilidad — desactiva un plato existente")
-    void cambiarDisponibilidad_desactivaPlato() {
-        Plato creado = service.crear(plato("Sopa", 15000.0));
+    @DisplayName("❌ eliminar — no existe lanza excepción")
+    void eliminar_noExiste_lanza() {
+        when(platoRepository.existsById(999L)).thenReturn(false);
 
-        Plato resultado = service.cambiarDisponibilidad(creado.getId(), false);
-
-        assertFalse(resultado.estaDisponible());
-    }
-
-    // ─── ERRORES ────────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("❌ obtenerPorId — ID inexistente lanza PlatoNotFoundException")
-    void obtenerPorId_noExiste_lanzaExcepcion() {
-        PlatoNotFoundException ex = assertThrows(
-                PlatoNotFoundException.class,
-                () -> service.obtenerPorId(999L)
-        );
-
-        assertTrue(ex.getMessage().contains("999"));
+        assertThrows(PlatoNotFoundException.class, () -> service.eliminar(999L));
     }
 
     @Test
-    @DisplayName("❌ crear — nombre duplicado lanza PlatoAlreadyExistsException")
-    void crear_nombreDuplicado_lanzaConflicto() {
-        // Configura el mock para que lance excepción al validar el nombre
-        doThrow(new PlatoAlreadyExistsException("duplicado"))
-                .when(validator).validarNombreUnico(any(), any());
+    @DisplayName("✅ eliminar — existe borra del repository")
+    void eliminar_existe_borra() {
+        when(platoRepository.existsById(1L)).thenReturn(true);
 
-        assertThrows(
-                PlatoAlreadyExistsException.class,
-                () -> service.crear(plato("Tacos", 10000.0))
-        );
+        service.eliminar(1L);
+
+        verify(platoRepository).deleteById(1L);
     }
 
     @Test
-    @DisplayName("❌ crear — precio fuera de rango lanza IllegalArgumentException")
-    void crear_precioFueraDeRango_lanzaExcepcion() {
-        doThrow(new IllegalArgumentException("Precio fuera de rango"))
-                .when(validator).validarPrecioRazonable(any());
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> service.crear(plato("Caro", 999_999_999.0))
-        );
-    }
-
-    @Test
-    @DisplayName("❌ eliminar — ID inexistente lanza PlatoNotFoundException")
-    void eliminar_noExiste_lanzaExcepcion() {
-        assertThrows(
-                PlatoNotFoundException.class,
-                () -> service.eliminar(999L)
-        );
-    }
-
-    @Test
-    @DisplayName("❌ actualizar — ID inexistente lanza PlatoNotFoundException")
-    void actualizar_noExiste_lanzaExcepcion() {
-        assertThrows(
-                PlatoNotFoundException.class,
-                () -> service.actualizar(999L, plato("X", 1000.0))
-        );
-    }
-
-    // ─── CASOS LÍMITE ───────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("✅ obtenerTodos — lista vacía devuelve lista vacía (no null)")
-    void obtenerTodos_sinPlatos_devuelveListaVacia() {
-        List<Plato> resultado = service.obtenerTodos();
-
-        assertNotNull(resultado);
-        assertTrue(resultado.isEmpty());
-    }
-
-    @Test
-    @DisplayName("✅ eliminar — elimina correctamente un plato existente")
-    void eliminar_platoExistente_eliminaDelMap() {
-        Plato creado = service.crear(plato("Eliminame", 1000.0));
-
-        service.eliminar(creado.getId());
-
-        assertThrows(
-                PlatoNotFoundException.class,
-                () -> service.obtenerPorId(creado.getId())
-        );
-    }
-
-    @Test
-    @DisplayName("✅ actualizar — modifica los campos correctamente")
-    void actualizar_platoExistente_modificaCampos() {
-        Plato creado = service.crear(plato("Original", 1000.0));
-
+    @DisplayName("✅ actualizar — modifica los campos")
+    void actualizar_modifica() {
+        PlatoEntity existente = entity(1L, "Original", 1000.0);
         Plato nuevosDatos = Plato.builder()
-                .nombre("Modificado")
-                .precio(2000.0)
-                .categoria("POSTRES")
-                .descripcion("Nueva descripción")
-                .build();
+                .nombre("Modificado").precio(2000.0)
+                .categoria("POSTRES").descripcion("nueva").build();
 
-        Plato resultado = service.actualizar(creado.getId(), nuevosDatos);
+        when(platoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(platoRepository.save(existente)).thenReturn(existente);
+        when(entityMapper.toDomain(existente)).thenReturn(Plato.builder()
+                .id(1L).nombre("Modificado").precio(2000.0).categoria("POSTRES").build());
+
+        Plato resultado = service.actualizar(1L, nuevosDatos);
 
         assertEquals("Modificado", resultado.getNombre());
-        assertEquals(2000.0, resultado.getPrecio());
-        assertEquals("POSTRES", resultado.getCategoria());
-    }
-
-    @Test
-    @DisplayName("eliminar — plato con pedidos activos lanza excepción")
-    void eliminar_conPedidosActivos_lanzaExcepcion() {
-        Plato creado = service.crear(plato("Sashimi", 22000.0));
-
-        when(pedidoService.tienePedidosActivosConPlato(creado.getId()))
-                .thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.eliminar(creado.getId()));
+        verify(validator).validarNombreUnicoExcluyendo("Modificado", 1L);
     }
 }

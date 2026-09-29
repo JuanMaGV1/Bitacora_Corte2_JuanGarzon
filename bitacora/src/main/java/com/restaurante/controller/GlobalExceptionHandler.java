@@ -220,4 +220,22 @@ public class GlobalExceptionHandler {
         log.warn("Plato no es roll: {}", ex.getMessage());
         return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
     }
+
+    // ─── Parqueadero: 404 ──────────────────────────────────────
+    @ExceptionHandler(com.restaurante.exception.RegistroVehiculoNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRegistroVehiculoNotFound(
+            com.restaurante.exception.RegistroVehiculoNotFoundException ex,
+            HttpServletRequest request) {
+        log.warn("Registro de vehículo no encontrado: {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    // ─── Parqueadero: 409 (lleno o placa ya activa) ────────────
+    @ExceptionHandler(com.restaurante.exception.ParqueaderoLlenoException.class)
+    public ResponseEntity<ErrorResponseDTO> handleParqueaderoLleno(
+            com.restaurante.exception.ParqueaderoLlenoException ex,
+            HttpServletRequest request) {
+        log.warn("Conflicto de parqueadero: {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
 }

@@ -24,6 +24,7 @@ public class ReporteServiceImpl implements ReporteService {
 
     @Override
     public ResumenDiaDTO resumenDelDia() {
+        // ✅ Uso los métodos del Service (que ya leen de BD) — NO .values()
         List<Pedido> pedidos = pedidoService.obtenerTodos();
 
         long totalPedidos = pedidos.size();

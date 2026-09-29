@@ -1,92 +1,103 @@
 package com.restaurante.service;
 
 import com.restaurante.exception.ReservaNotFoundException;
+import com.restaurante.mapper.ReservaEntityMapper;
 import com.restaurante.model.domain.EstadoReserva;
 import com.restaurante.model.domain.Mesa;
 import com.restaurante.model.domain.Reserva;
+import com.restaurante.persistence.entity.ReservaEntity;
+import com.restaurante.repository.ReservaRepository;
 import com.restaurante.validator.ReservaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservaServiceImpl implements ReservaService {
 
-    private final Map<Long, Reserva> reservas = new ConcurrentHashMap<>();
-    private final AtomicLong         contador = new AtomicLong(1);
-
-    private final ReservaValidator validator;
-    private final MesaService mesaService;
+    private final ReservaRepository   reservaRepository;
+    private final ReservaEntityMapper entityMapper;
+    private final ReservaValidator    validator;
+    private final MesaService         mesaService;
 
     @Override
     public List<Reserva> obtenerTodas() {
-        return reservas.values().stream().toList();
+        return reservaRepository.findAll().stream()
+                .map(entityMapper::toDomain)
+                .toList();
     }
 
     @Override
     public List<Reserva> obtenerPorCliente(String cliente) {
-        return reservas.values().stream()
-                .filter(r -> r.getCliente().equalsIgnoreCase(cliente))
+        return reservaRepository.findByClienteIgnoreCase(cliente).stream()
+                .map(entityMapper::toDomain)
                 .toList();
     }
 
     @Override
     public List<Reserva> obtenerVigentes() {
-        return reservas.values().stream()
-                .filter(Reserva::estaVigente)
-                .toList();
+        return reservaRepository.findByEstadoIn(
+                List.of(EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA)
+        ).stream().map(entityMapper::toDomain).toList();
     }
 
     @Override
     public Reserva obtenerPorId(Long id) {
-        return reservas.values().stream()
-                .filter(r -> r.getId().equals(id))
-                .findFirst()
+        return reservaRepository.findById(id)
+                .map(entityMapper::toDomain)
                 .orElseThrow(() -> new ReservaNotFoundException("Reserva", id));
     }
 
     @Override
+    @Transactional
     public Reserva crear(Reserva reserva) {
-        // ─── Validación 1: la mesa debe existir ─────────────────────
+        // Validar que la mesa exista
         Mesa mesa = mesaService.obtenerPorId(reserva.getIdMesa());
 
-        // ─── Validación 2: comensales ≤ capacidad de la mesa ────────
+        // Validar comensales ≤ capacidad
         validator.validarComensalesContraCapacidad(reserva, mesa.getCapacidad());
 
-        // ─── Validación 3: sin conflicto de horario ─────────────────
-        validator.validarSinConflictoHorario(reserva, reservas.values());
+        // Validar conflicto de horario
+        validator.validarSinConflictoHorario(reserva);
 
-        reserva.setId(contador.getAndIncrement());
         reserva.setEstado(EstadoReserva.PENDIENTE);
-        reservas.put(reserva.getId(), reserva);
+        ReservaEntity guardada = reservaRepository.save(entityMapper.toEntity(reserva));
 
-        log.info("Reserva creada: id={}, cliente={}, mesa={}, comensales={}",
-                reserva.getId(), reserva.getCliente(),
-                reserva.getIdMesa(), reserva.getComensales());
-        return reserva;
+        log.info("Reserva creada: id={}, cliente={}, mesa={}",
+                guardada.getId(), guardada.getCliente(), guardada.getIdMesa());
+        return entityMapper.toDomain(guardada);
     }
 
     @Override
+    @Transactional
     public Reserva cambiarEstado(Long id, EstadoReserva nuevoEstado) {
-        Reserva reserva = obtenerPorId(id);
+        ReservaEntity entity = reservaRepository.findById(id)
+                .orElseThrow(() -> new ReservaNotFoundException("Reserva", id));
+
+        Reserva reserva = entityMapper.toDomain(entity);
         validator.validarTransicion(reserva, nuevoEstado);
-        reserva.setEstado(nuevoEstado);
+
+        entity.setEstado(nuevoEstado);
         log.info("Reserva #{} → {}", id, nuevoEstado);
-        return reserva;
+        return entityMapper.toDomain(reservaRepository.save(entity));
     }
 
     @Override
+    @Transactional
     public void cancelar(Long id) {
-        Reserva reserva = obtenerPorId(id);
+        ReservaEntity entity = reservaRepository.findById(id)
+                .orElseThrow(() -> new ReservaNotFoundException("Reserva", id));
+
+        Reserva reserva = entityMapper.toDomain(entity);
         validator.validarCancelable(reserva);
-        reserva.setEstado(EstadoReserva.CANCELADA);
+
+        entity.setEstado(EstadoReserva.CANCELADA);
+        reservaRepository.save(entity);
         log.info("Reserva #{} cancelada", id);
     }
 }

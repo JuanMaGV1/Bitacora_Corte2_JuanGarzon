@@ -1,88 +1,95 @@
 package com.restaurante.service;
 
-import com.restaurante.exception.MesaNoDisponibleException;   // ← AGREGAR
+import com.restaurante.exception.MesaNoDisponibleException;
 import com.restaurante.exception.MesaNotFoundException;
+import com.restaurante.mapper.MesaEntityMapper;
 import com.restaurante.model.domain.EstadoMesa;
 import com.restaurante.model.domain.Mesa;
+import com.restaurante.persistence.entity.MesaEntity;
+import com.restaurante.repository.MesaRepository;
 import com.restaurante.validator.MesaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MesaServiceImpl implements MesaService {
 
-    private final Map<Long, Mesa> mesas    = new ConcurrentHashMap<>();
-    private final AtomicLong      contador = new AtomicLong(1);
-
-    private final MesaValidator validator;
+    private final MesaRepository    mesaRepository;
+    private final MesaEntityMapper  entityMapper;
+    private final MesaValidator     validator;
 
     @Override
     public List<Mesa> obtenerTodas() {
-        return mesas.values().stream().toList();
+        return mesaRepository.findAll().stream()
+                .map(entityMapper::toDomain)
+                .toList();
     }
 
     @Override
     public List<Mesa> obtenerDisponibles() {
-        return mesas.values().stream()
-                .filter(Mesa::estaDisponible)
+        return mesaRepository.findByEstado(EstadoMesa.DISPONIBLE).stream()
+                .map(entityMapper::toDomain)
                 .toList();
     }
 
     @Override
     public Mesa obtenerPorId(Long id) {
-        return mesas.values().stream()
-                .filter(m -> m.getId().equals(id))
-                .findFirst()
+        return mesaRepository.findById(id)
+                .map(entityMapper::toDomain)
                 .orElseThrow(() -> new MesaNotFoundException("Mesa", id));
     }
 
     @Override
     public Mesa obtenerPorNumero(Integer numero) {
-        return mesas.values().stream()
-                .filter(m -> m.getNumero().equals(numero))
-                .findFirst()
-                .orElseThrow(() -> new MesaNotFoundException(
-                        "Mesa con número " + numero, null));
+        return mesaRepository.findByNumero(numero)
+                .map(entityMapper::toDomain)
+                .orElseThrow(() -> new MesaNotFoundException("Mesa " + numero, null));
     }
 
     @Override
     public Mesa crear(Mesa mesa) {
-        validator.validarNumeroUnico(mesa.getNumero(), mesas.values());
+        validator.validarNumeroUnico(mesa.getNumero());
 
-        mesa.setId(contador.getAndIncrement());
-        mesa.setEstado(EstadoMesa.DISPONIBLE);   // ← AGREGAR
-        mesa.setCuentaAbierta(false);            // ← AGREGAR
-        mesas.put(mesa.getId(), mesa);
+        mesa.setEstado(EstadoMesa.DISPONIBLE);
+        mesa.setCuentaAbierta(false);
 
-        log.info("Mesa creada: id={}, número={}, capacidad={}",
-                mesa.getId(), mesa.getNumero(), mesa.getCapacidad());
-        return mesa;
+        MesaEntity guardada = mesaRepository.save(entityMapper.toEntity(mesa));
+        log.info("Mesa creada: id={}, número={}", guardada.getId(), guardada.getNumero());
+        return entityMapper.toDomain(guardada);
     }
 
     @Override
+    @Transactional
     public Mesa abrirCuenta(Long id) {
         Mesa mesa = obtenerPorId(id);
         validator.validarAperturaCuenta(mesa);
-        mesa.abrirCuenta();
-        log.info("Cuenta abierta en mesa {}", mesa.getNumero());
-        return mesa;
+
+        MesaEntity entity = mesaRepository.findById(id).orElseThrow();
+        entity.setCuentaAbierta(true);
+        entity.setEstado(EstadoMesa.OCUPADA);
+
+        log.info("Cuenta abierta en mesa {}", entity.getNumero());
+        return entityMapper.toDomain(mesaRepository.save(entity));
     }
 
     @Override
+    @Transactional
     public Mesa cerrarCuenta(Long id) {
         Mesa mesa = obtenerPorId(id);
         validator.validarCierreCuenta(mesa);
-        mesa.cerrarCuenta();
-        log.info("Cuenta cerrada en mesa {}", mesa.getNumero());
-        return mesa;
+
+        MesaEntity entity = mesaRepository.findById(id).orElseThrow();
+        entity.setCuentaAbierta(false);
+        entity.setEstado(EstadoMesa.DISPONIBLE);
+
+        log.info("Cuenta cerrada en mesa {}", entity.getNumero());
+        return entityMapper.toDomain(mesaRepository.save(entity));
     }
 
     @Override
@@ -90,10 +97,9 @@ public class MesaServiceImpl implements MesaService {
         Mesa mesa = obtenerPorId(id);
         if (mesa.tieneCuentaAbierta()) {
             throw new MesaNoDisponibleException(
-                    "No se puede eliminar la mesa " + mesa.getNumero()
-                    + ": tiene cuenta abierta");
+                    "No se puede eliminar la mesa " + mesa.getNumero() + ": tiene cuenta abierta");
         }
-        mesas.remove(id);
+        mesaRepository.deleteById(id);
         log.info("Mesa eliminada: id={}", id);
     }
 }

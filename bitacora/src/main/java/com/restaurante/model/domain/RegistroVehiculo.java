@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor 
 @AllArgsConstructor 
 
-public class Vehiculo {
-    private long id;
+public class RegistroVehiculo {
+    private Long id;
     private String placa;
     private LocalDateTime entrada;
     private LocalDateTime salida;
-    private double cobro;
+    private Double cobro;
 
     public double calcularCobro(){return cobro;}
     public void registrarSalida(){}

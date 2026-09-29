@@ -3,8 +3,11 @@ package com.restaurante.service;
 import com.restaurante.exception.NoEsRollException;
 import com.restaurante.exception.PlatoNotFoundException;
 import com.restaurante.exception.TandaExcedidaException;
+import com.restaurante.mapper.TandaDocumentMapper;
 import com.restaurante.model.domain.Plato;
 import com.restaurante.model.dto.response.TandaResponseDTO;
+import com.restaurante.persistence.document.TandaDocument;
+import com.restaurante.repository.TandaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -22,10 +24,9 @@ public class TandaServiceImpl implements TandaService {
     private static final int MAX_ROLLS = 6;
     private static final String CATEGORIA_ROLL = "ROLL";
 
-    private final PlatoService platoService;   // ← inyectado para validar
-
-    private final List<TandaResponseDTO> tandas = new ArrayList<>();
-    private final AtomicLong contador = new AtomicLong(1);
+    private final TandaRepository     tandaRepository;    // ← Mongo en vez de ArrayList
+    private final TandaDocumentMapper documentMapper;
+    private final PlatoService        platoService;
 
     @Override
     public TandaResponseDTO crear(List<Long> idsRolls) {
@@ -46,7 +47,7 @@ public class TandaServiceImpl implements TandaService {
         // ─── Validación 3: cada id debe existir ─────────────────────
         List<Plato> rolls = new ArrayList<>();
         for (Long idPlato : idsRolls) {
-            Plato plato = platoService.obtenerPorId(idPlato);   // ← lanza 404 si no existe
+            Plato plato = platoService.obtenerPorId(idPlato);   // lanza 404 si no existe
             rolls.add(plato);
         }
 
@@ -59,14 +60,13 @@ public class TandaServiceImpl implements TandaService {
                     .filter(p -> !CATEGORIA_ROLL.equalsIgnoreCase(p.getCategoria()))
                     .map(p -> p.getNombre() + " (" + p.getCategoria() + ")")
                     .toList();
-
             log.warn("Tanda rechazada: platos que no son rolls → {}", noRolls);
             throw new NoEsRollException(
                     "Solo se pueden agrupar rolls en una tanda. " +
                     "Los siguientes no son rolls: " + noRolls);
         }
 
-        // ─── Validación 5: todos deben estar disponibles ────────────
+        // ─── Validación 5: todos disponibles ────────────────────────
         boolean hayAgotado = rolls.stream().anyMatch(p -> !p.estaDisponible());
 
         if (hayAgotado) {
@@ -74,30 +74,30 @@ public class TandaServiceImpl implements TandaService {
                     .filter(p -> !p.estaDisponible())
                     .map(Plato::getNombre)
                     .toList();
-
             log.warn("Tanda rechazada: rolls agotados → {}", agotados);
             throw new IllegalArgumentException(
                     "No se puede crear la tanda: rolls agotados → " + agotados);
         }
 
-        // ─── Todo válido: crear la tanda ────────────────────────────
-        TandaResponseDTO tanda = TandaResponseDTO.builder()
-                .id(contador.getAndIncrement())
+        // ─── Crear y guardar en MongoDB ────────────────────────────
+        TandaDocument documento = TandaDocument.builder()
                 .idsRolls(idsRolls)
                 .cantidad(idsRolls.size())
                 .fechaCreacion(LocalDateTime.now())
                 .estado("EN_PREPARACION")
                 .build();
 
-        tandas.add(tanda);
+        TandaDocument guardado = tandaRepository.save(documento);
 
-        log.info("Tanda #{} creada con {} rolls — Sakura Sushi",
-                tanda.getId(), tanda.getCantidad());
-        return tanda;
+        log.info("Tanda #{} creada en MongoDB con {} rolls — Sakura Sushi",
+                guardado.getId(), guardado.getCantidad());
+        return documentMapper.toResponse(guardado);
     }
 
     @Override
     public List<TandaResponseDTO> obtenerTodas() {
-        return List.copyOf(tandas);
+        return tandaRepository.findAll().stream()
+                .map(documentMapper::toResponse)
+                .toList();
     }
 }
