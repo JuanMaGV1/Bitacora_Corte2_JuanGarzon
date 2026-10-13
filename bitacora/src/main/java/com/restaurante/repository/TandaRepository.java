@@ -9,9 +9,6 @@ import java.util.List;
 
 @Repository
 public interface TandaRepository extends MongoRepository<TandaDocument, String> {
-
-    /** Extiende MongoRepository — igual que JpaRepository pero para documentos. */
-    
     List<TandaDocument> findByEstado(String estado);
     List<TandaDocument> findByFechaCreacionBetween(LocalDateTime desde, LocalDateTime hasta);
     List<TandaDocument> findByCantidadLessThanEqual(int cantidad);

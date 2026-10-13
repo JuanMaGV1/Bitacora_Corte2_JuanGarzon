@@ -1,9 +1,6 @@
 package com.restaurante.model.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Map;
 
@@ -12,9 +9,9 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResumenDiaDTO {
-    private Long                 totalPedidos;
-    private Double               ingresoTotal;
-    private String               platoMasPedido;
-    private Long                 mesasConCuentaAbierta;
-    private Map<String, Long>    platosPopulares;
+    private Long              totalPedidos;
+    private Double            ingresoTotal;
+    private String            platoMasPedido;
+    private Long              mesasConCuentaAbierta;
+    private Map<String, Long> platosPopulares;
 }

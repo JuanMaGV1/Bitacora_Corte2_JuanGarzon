@@ -1,18 +1,8 @@
 package com.restaurante.model.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
-/**
- * DTO de entrada. Solo validaciones de INPUT (Bean Validation).
- * Las reglas de negocio van en el Service / Validator.
- */
 @Data
 @Builder
 @NoArgsConstructor

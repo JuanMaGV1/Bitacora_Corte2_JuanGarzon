@@ -4,13 +4,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * Configuración de CORS para permitir que un frontend
- * (React, Vue, Angular) consuma la API desde otro origen.
- *
- * Sin esto, el navegador bloquearía las peticiones desde
- * http://localhost:3000 o http://localhost:5173.
- */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 

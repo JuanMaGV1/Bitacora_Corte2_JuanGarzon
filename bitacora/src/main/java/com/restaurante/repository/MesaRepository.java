@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface MesaRepository extends JpaRepository<MesaEntity, Long> {
-
     List<MesaEntity> findByEstado(EstadoMesa estado);
     Optional<MesaEntity> findByNumero(Integer numero);
     boolean existsByNumero(Integer numero);

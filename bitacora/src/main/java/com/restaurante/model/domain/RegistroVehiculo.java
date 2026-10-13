@@ -1,27 +1,19 @@
 package com.restaurante.model.domain;
 
+import lombok.*;
+
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-
-@Data 
-@Builder 
-@NoArgsConstructor 
-@AllArgsConstructor 
-
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegistroVehiculo {
-    private Long id;
-    private String placa;
+    private Long          id;
+    private String        placa;
     private LocalDateTime entrada;
     private LocalDateTime salida;
-    private Double cobro;
+    private Double        cobro;
 
-    public double calcularCobro(){return cobro;}
-    public void registrarSalida(){}
-    public boolean estaActivo(){return false;}
-
+    public boolean estaActivo() { return salida == null; }
 }

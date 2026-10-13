@@ -1,10 +1,7 @@
 package com.restaurante.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "items_pedido")
@@ -30,7 +27,6 @@ public class ItemPedidoEntity {
     @Column(nullable = false)
     private Integer cantidad;
 
-    /** Referencia al pedido (FK). La maneja Hibernate al hacer cascade. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
     private PedidoEntity pedido;

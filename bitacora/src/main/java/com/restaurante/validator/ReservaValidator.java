@@ -1,7 +1,8 @@
 package com.restaurante.validator;
 
+import com.restaurante.exception.ConflictoException;
 import com.restaurante.exception.EstadoInvalidoException;
-import com.restaurante.exception.ReservaConflictoException;
+import com.restaurante.exception.ReglaDeNegocioException;
 import com.restaurante.model.domain.EstadoReserva;
 import com.restaurante.model.domain.Reserva;
 import com.restaurante.persistence.entity.ReservaEntity;
@@ -31,32 +32,32 @@ public class ReservaValidator {
                         desde, hasta);
 
         if (!conflictos.isEmpty()) {
-            throw new ReservaConflictoException(
-                    "Ya existe una reserva vigente para la mesa " + nueva.getIdMesa()
-                    + " cerca de ese horario");
+            throw new ConflictoException(
+                "Ya existe una reserva vigente para la mesa " + nueva.getIdMesa()
+                + " cerca de ese horario");
         }
     }
 
     public void validarComensalesContraCapacidad(Reserva reserva, int capacidadMesa) {
         if (reserva.getComensales() > capacidadMesa) {
-            throw new IllegalArgumentException(
-                    "La reserva tiene " + reserva.getComensales()
-                    + " comensales, pero la mesa " + reserva.getIdMesa()
-                    + " solo tiene capacidad para " + capacidadMesa);
+            throw new ReglaDeNegocioException(
+                "La reserva tiene " + reserva.getComensales()
+                + " comensales, pero la mesa " + reserva.getIdMesa()
+                + " solo tiene capacidad para " + capacidadMesa);
         }
     }
 
     public void validarTransicion(Reserva reserva, EstadoReserva nuevoEstado) {
         if (!reserva.getEstado().puedeTransicionarA(nuevoEstado)) {
             throw new EstadoInvalidoException(
-                    "No se puede pasar de " + reserva.getEstado() + " a " + nuevoEstado);
+                "No se puede pasar de " + reserva.getEstado() + " a " + nuevoEstado);
         }
     }
 
     public void validarCancelable(Reserva reserva) {
         if (!reserva.getEstado().esCancelable()) {
             throw new EstadoInvalidoException(
-                    "Una reserva en estado " + reserva.getEstado() + " no puede cancelarse");
+                "Una reserva en estado " + reserva.getEstado() + " no puede cancelarse");
         }
     }
 }

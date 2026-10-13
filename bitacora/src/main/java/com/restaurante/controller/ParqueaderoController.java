@@ -6,14 +6,13 @@ import com.restaurante.model.dto.request.RegistroVehiculoRequestDTO;
 import com.restaurante.model.dto.response.RegistroVehiculoResponseDTO;
 import com.restaurante.service.RegistroVehiculoService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,57 +28,33 @@ public class ParqueaderoController {
     private final RegistroVehiculoService registroService;
     private final RegistroVehiculoMapper  registroMapper;
 
-    // ─── POST /entrada ──────────────────────────────────────────────
-
     @PostMapping("/entrada")
+    @PreAuthorize("hasAnyRole('GERENTE','MESERO')")
     @Operation(summary = "Registrar entrada de un vehículo")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Entrada registrada"),
-        @ApiResponse(responseCode = "400", description = "Placa inválida"),
-        @ApiResponse(responseCode = "409", description = "Placa ya registrada o parqueadero lleno")
-    })
     public ResponseEntity<RegistroVehiculoResponseDTO> registrarEntrada(
             @RequestBody @Valid RegistroVehiculoRequestDTO dto) {
-
-        log.info("POST /api/v1/parqueadero/entrada — placa={}", dto.getPlaca());
-
         RegistroVehiculo creado = registroService.registrarEntrada(
                 registroMapper.toDomain(dto));
-
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(registroMapper.toResponse(creado));
     }
 
-    // ─── POST /salida/{placa} ───────────────────────────────────────
-
     @PostMapping("/salida/{placa}")
+    @PreAuthorize("hasAnyRole('GERENTE','MESERO')")
     @Operation(summary = "Registrar salida y calcular el cobro")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Salida registrada"),
-        @ApiResponse(responseCode = "404", description = "No hay registro activo para esa placa")
-    })
-    public ResponseEntity<RegistroVehiculoResponseDTO> registrarSalida(
-            @PathVariable String placa) {
-
-        log.info("POST /api/v1/parqueadero/salida/{}", placa);
-
+    public ResponseEntity<RegistroVehiculoResponseDTO> registrarSalida(@PathVariable String placa) {
         RegistroVehiculo cerrado = registroService.registrarSalida(placa);
         return ResponseEntity.ok(registroMapper.toResponse(cerrado));
     }
 
-    // ─── GET /activos ───────────────────────────────────────────────
-
     @GetMapping("/activos")
-    @Operation(summary = "Listar vehículos activos en el parqueadero")
+    @Operation(summary = "Listar vehículos activos")
     public ResponseEntity<List<RegistroVehiculoResponseDTO>> activos() {
-        return ResponseEntity.ok(
-                registroMapper.toResponseList(registroService.obtenerActivos()));
+        return ResponseEntity.ok(registroMapper.toResponseList(registroService.obtenerActivos()));
     }
 
-    // ─── GET /estado ────────────────────────────────────────────────
-
     @GetMapping("/estado")
-    @Operation(summary = "Consultar cupos disponibles y vehículos activos")
+    @Operation(summary = "Consultar cupos disponibles")
     public ResponseEntity<Map<String, Object>> estado() {
         return ResponseEntity.ok(Map.of(
                 "cuposDisponibles", registroService.cuposDisponibles(),
@@ -87,13 +62,10 @@ public class ParqueaderoController {
         ));
     }
 
-    // ─── GET /placa/{placa} ─────────────────────────────────────────
-
     @GetMapping("/placa/{placa}")
     @Operation(summary = "Historial de registros de una placa")
-    public ResponseEntity<List<RegistroVehiculoResponseDTO>> porPlaca(
-            @PathVariable String placa) {
-        return ResponseEntity.ok(
-                registroMapper.toResponseList(registroService.obtenerPorPlaca(placa)));
+    public ResponseEntity<List<RegistroVehiculoResponseDTO>> porPlaca(@PathVariable String placa) {
+        return ResponseEntity.ok(registroMapper.toResponseList(
+                registroService.obtenerPorPlaca(placa)));
     }
 }

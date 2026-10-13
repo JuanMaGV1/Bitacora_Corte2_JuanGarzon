@@ -2,10 +2,7 @@ package com.restaurante.persistence.entity;
 
 import com.restaurante.model.domain.EstadoPedido;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -24,12 +21,10 @@ public class PedidoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Relación con Mesa — ManyToOne. Muchos pedidos pueden ser de la misma mesa. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mesa_id", nullable = false)
     private MesaEntity mesa;
 
-    /** Relación con items — OneToMany con cascade ALL. */
     @OneToMany(
         mappedBy = "pedido",
         cascade = CascadeType.ALL,
@@ -50,7 +45,6 @@ public class PedidoEntity {
     @Column(length = 200)
     private String notas;
 
-    /** Helper: agrega item y setea la relación bidireccional */
     public void addItem(ItemPedidoEntity item) {
         items.add(item);
         item.setPedido(this);

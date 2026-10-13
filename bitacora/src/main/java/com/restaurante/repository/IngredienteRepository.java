@@ -8,7 +8,6 @@ import java.util.List;
 
 @Repository
 public interface IngredienteRepository extends JpaRepository<IngredienteEntity, Long> {
-
     List<IngredienteEntity> findByDisponibleTrue();
     List<IngredienteEntity> findByTipoIgnoreCase(String tipo);
     boolean existsByNombreIgnoreCase(String nombre);

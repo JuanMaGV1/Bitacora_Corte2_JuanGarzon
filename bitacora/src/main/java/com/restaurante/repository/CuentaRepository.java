@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface CuentaRepository extends JpaRepository<CuentaEntity, Long> {
-
     Optional<CuentaEntity> findByIdMesaAndEstadoIn(Long idMesa, List<EstadoCuenta> estados);
     List<CuentaEntity> findByEstadoIn(List<EstadoCuenta> estados);
 }

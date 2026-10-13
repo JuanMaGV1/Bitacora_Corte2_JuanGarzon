@@ -8,7 +8,6 @@ import java.util.List;
 
 @Repository
 public interface PlatoRepository extends JpaRepository<PlatoEntity, Long> {
-
     List<PlatoEntity> findByDisponibleTrue();
     List<PlatoEntity> findByCategoriaIgnoreCase(String categoria);
     boolean existsByNombreIgnoreCase(String nombre);

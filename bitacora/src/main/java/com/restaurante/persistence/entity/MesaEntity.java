@@ -2,10 +2,7 @@ package com.restaurante.persistence.entity;
 
 import com.restaurante.model.domain.EstadoMesa;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "mesas")

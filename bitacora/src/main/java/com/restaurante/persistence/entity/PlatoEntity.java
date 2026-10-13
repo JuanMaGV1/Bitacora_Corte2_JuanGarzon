@@ -1,18 +1,11 @@
 package com.restaurante.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-/**
- * Entidad JPA del plato. Representa la tabla "platos" en PostgreSQL.
- * NO tiene lógica de negocio — solo estructura y anotaciones JPA.
- */
 @Entity
 @Table(name = "platos")
 @Data

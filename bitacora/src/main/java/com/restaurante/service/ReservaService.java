@@ -6,7 +6,6 @@ import com.restaurante.model.domain.Reserva;
 import java.util.List;
 
 public interface ReservaService {
-
     List<Reserva> obtenerTodas();
     List<Reserva> obtenerPorCliente(String cliente);
     List<Reserva> obtenerVigentes();

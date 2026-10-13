@@ -1,15 +1,7 @@
 package com.restaurante.model.domain;
 
-/**
- * Estados de una reserva.
- * Flujo: PENDIENTE → CONFIRMADA → COMPLETADA
- *                ↘ CANCELADA ↙
- */
 public enum EstadoReserva {
-    PENDIENTE,
-    CONFIRMADA,
-    COMPLETADA,
-    CANCELADA;
+    PENDIENTE, CONFIRMADA, COMPLETADA, CANCELADA;
 
     public boolean puedeTransicionarA(EstadoReserva siguiente) {
         return switch (this) {
@@ -19,11 +11,6 @@ public enum EstadoReserva {
         };
     }
 
-    public boolean esCancelable() {
-        return this == PENDIENTE || this == CONFIRMADA;
-    }
-
-    public boolean estaVigente() {
-        return this == PENDIENTE || this == CONFIRMADA;
-    }
+    public boolean esCancelable() { return this == PENDIENTE || this == CONFIRMADA; }
+    public boolean estaVigente()  { return this == PENDIENTE || this == CONFIRMADA; }
 }

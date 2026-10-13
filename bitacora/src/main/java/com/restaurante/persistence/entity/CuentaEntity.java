@@ -2,10 +2,7 @@ package com.restaurante.persistence.entity;
 
 import com.restaurante.model.domain.EstadoCuenta;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -27,7 +24,6 @@ public class CuentaEntity {
     @Column(nullable = false)
     private Long idMesa;
 
-    /** Lista de IDs de pedidos que agrupa esta cuenta */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "cuenta_pedidos",

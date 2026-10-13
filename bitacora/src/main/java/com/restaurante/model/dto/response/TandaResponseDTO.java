@@ -1,9 +1,6 @@
 package com.restaurante.model.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TandaResponseDTO {
-    private String        id;        // ← String, no Long (Mongo usa String)
+    private String        id;
     private List<Long>    idsRolls;
     private Integer       cantidad;
     private LocalDateTime fechaCreacion;

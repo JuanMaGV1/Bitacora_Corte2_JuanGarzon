@@ -1,10 +1,7 @@
 package com.restaurante.model.dto.request;
 
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -14,8 +11,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ReservaRequestDTO {
 
-    @NotNull(message = "El número de mesa es obligatorio")
-    @Positive(message = "El número de mesa debe ser mayor a 0")
+    @NotNull(message = "El id de mesa es obligatorio")
+    @Positive
     private Long idMesa;
 
     @NotBlank(message = "El nombre del cliente es obligatorio")

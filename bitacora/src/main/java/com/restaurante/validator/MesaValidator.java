@@ -1,6 +1,7 @@
 package com.restaurante.validator;
 
-import com.restaurante.exception.MesaNoDisponibleException;
+import com.restaurante.exception.ConflictoException;
+import com.restaurante.exception.EstadoInvalidoException;
 import com.restaurante.model.domain.Mesa;
 import com.restaurante.repository.MesaRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,22 +17,21 @@ public class MesaValidator {
 
     public void validarNumeroUnico(Integer numero) {
         if (mesaRepository.existsByNumero(numero)) {
-            throw new MesaNoDisponibleException(
-                    "Ya existe una mesa con el número " + numero);
+            throw new ConflictoException("Ya existe una mesa con el número " + numero);
         }
     }
 
     public void validarAperturaCuenta(Mesa mesa) {
         if (mesa.tieneCuentaAbierta()) {
-            throw new MesaNoDisponibleException(
-                    "La mesa " + mesa.getNumero() + " ya tiene una cuenta abierta");
+            throw new EstadoInvalidoException(
+                "La mesa " + mesa.getNumero() + " ya tiene una cuenta abierta");
         }
     }
 
     public void validarCierreCuenta(Mesa mesa) {
         if (!mesa.tieneCuentaAbierta()) {
-            throw new MesaNoDisponibleException(
-                    "La mesa " + mesa.getNumero() + " no tiene cuenta abierta");
+            throw new EstadoInvalidoException(
+                "La mesa " + mesa.getNumero() + " no tiene cuenta abierta");
         }
     }
 }

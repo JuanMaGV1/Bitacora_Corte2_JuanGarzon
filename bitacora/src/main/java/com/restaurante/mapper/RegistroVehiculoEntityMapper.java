@@ -6,7 +6,6 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface RegistroVehiculoEntityMapper {
-
     RegistroVehiculoEntity toEntity(RegistroVehiculo registro);
     RegistroVehiculo toDomain(RegistroVehiculoEntity entity);
 }
