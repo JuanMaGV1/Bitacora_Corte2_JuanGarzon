@@ -12,7 +12,7 @@ env:
 jobs:
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 1: Compilar y ejecutar pruebas
+  # JOB 1: Compilar, testear y publicar reportes
   # ─────────────────────────────────────────────────────────────
   test:
     name: 🧪 Compilar y probar
@@ -30,23 +30,23 @@ jobs:
           cache: maven
 
       - name: Compilar y ejecutar pruebas
+        working-directory: ./bitacora
         run: mvn clean test --no-transfer-progress
-        continue-on-error: false
 
-      - name: Publicar reporte de pruebas
+      - name: Publicar reporte de pruebas (Surefire)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: target/surefire-reports/
+          path: bitacora/target/surefire-reports/
           if-no-files-found: ignore
 
-      - name: Publicar reporte de cobertura
+      - name: Publicar reporte de cobertura (JaCoCo)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
-          path: target/site/jacoco/
+          path: bitacora/target/site/jacoco/
           if-no-files-found: ignore
 
   # ─────────────────────────────────────────────────────────────
@@ -84,7 +84,8 @@ jobs:
       - name: Build y push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./bitacora
+          file: ./bitacora/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
