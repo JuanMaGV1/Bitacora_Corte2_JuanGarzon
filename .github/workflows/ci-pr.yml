@@ -21,9 +21,11 @@ jobs:
           cache: maven
 
       - name: Compilar
+        working-directory: ./bitacora
         run: mvn clean compile --no-transfer-progress
 
       - name: Ejecutar pruebas
+        working-directory: ./bitacora
         run: mvn test --no-transfer-progress
 
       - name: Comentario de éxito en el PR
