@@ -5,7 +5,6 @@ import com.restaurante.model.domain.Cuenta;
 import java.util.List;
 
 public interface CuentaService {
-
     List<Cuenta> obtenerTodas();
     Cuenta obtenerPorId(Long id);
     Cuenta obtenerPorMesa(Long idMesa);

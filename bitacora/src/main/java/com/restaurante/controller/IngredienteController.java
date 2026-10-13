@@ -6,14 +6,13 @@ import com.restaurante.model.dto.request.IngredienteRequestDTO;
 import com.restaurante.model.dto.response.IngredienteResponseDTO;
 import com.restaurante.service.IngredienteService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,8 +43,7 @@ public class IngredienteController {
 
     @GetMapping("/tipo/{tipo}")
     @Operation(summary = "Listar ingredientes por tipo")
-    public ResponseEntity<List<IngredienteResponseDTO>> porTipo(
-            @PathVariable String tipo) {
+    public ResponseEntity<List<IngredienteResponseDTO>> porTipo(@PathVariable String tipo) {
         return ResponseEntity.ok(
                 ingredienteMapper.toResponseList(ingredienteService.obtenerPorTipo(tipo)));
     }
@@ -58,33 +56,28 @@ public class IngredienteController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('GERENTE')")
     @Operation(summary = "Crear un nuevo ingrediente")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Ingrediente creado"),
-        @ApiResponse(responseCode = "400", description = "Datos inválidos"),
-        @ApiResponse(responseCode = "409", description = "Nombre duplicado")
-    })
     public ResponseEntity<IngredienteResponseDTO> crear(
             @RequestBody @Valid IngredienteRequestDTO dto) {
-
-        log.info("POST /api/v1/ingredientes — nombre={}", dto.getNombre());
         Ingrediente creado = ingredienteService.crear(ingredienteMapper.toDomain(dto));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ingredienteMapper.toResponse(creado));
     }
 
     @PatchMapping("/{id}/disponible")
+    @PreAuthorize("hasAnyRole('GERENTE','MESERO')")
     @Operation(summary = "Cambiar disponibilidad de un ingrediente")
     public ResponseEntity<IngredienteResponseDTO> cambiarDisponibilidad(
             @PathVariable Long id,
             @RequestParam boolean disponible) {
-        Ingrediente actualizado = ingredienteService.cambiarDisponibilidad(id, disponible);
-        return ResponseEntity.ok(ingredienteMapper.toResponse(actualizado));
+        return ResponseEntity.ok(ingredienteMapper.toResponse(
+                ingredienteService.cambiarDisponibilidad(id, disponible)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GERENTE')")
     @Operation(summary = "Eliminar un ingrediente")
-    @ApiResponse(responseCode = "204", description = "Ingrediente eliminado")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         ingredienteService.eliminar(id);
         return ResponseEntity.noContent().build();

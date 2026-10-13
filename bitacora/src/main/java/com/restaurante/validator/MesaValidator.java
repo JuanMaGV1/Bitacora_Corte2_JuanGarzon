@@ -1,40 +1,37 @@
 package com.restaurante.validator;
 
-import com.restaurante.exception.MesaNoDisponibleException;
+import com.restaurante.exception.ConflictoException;
+import com.restaurante.exception.EstadoInvalidoException;
 import com.restaurante.model.domain.Mesa;
+import com.restaurante.repository.MesaRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MesaValidator {
 
-    /** Regla: el número de mesa debe ser único */
-    public void validarNumeroUnico(Integer numero, Collection<Mesa> existentes) {
-        boolean duplicado = existentes.stream()
-                .anyMatch(m -> m.getNumero().equals(numero));
+    private final MesaRepository mesaRepository;
 
-        if (duplicado) {
-            throw new MesaNoDisponibleException(
-                    "Ya existe una mesa con el número " + numero);
+    public void validarNumeroUnico(Integer numero) {
+        if (mesaRepository.existsByNumero(numero)) {
+            throw new ConflictoException("Ya existe una mesa con el número " + numero);
         }
     }
 
-    /** Regla: no se puede abrir cuenta en una mesa no disponible */
     public void validarAperturaCuenta(Mesa mesa) {
         if (mesa.tieneCuentaAbierta()) {
-            throw new MesaNoDisponibleException(
-                    "La mesa " + mesa.getNumero() + " ya tiene una cuenta abierta");
+            throw new EstadoInvalidoException(
+                "La mesa " + mesa.getNumero() + " ya tiene una cuenta abierta");
         }
     }
 
-    /** Regla: no se puede cerrar una cuenta que no está abierta */
     public void validarCierreCuenta(Mesa mesa) {
         if (!mesa.tieneCuentaAbierta()) {
-            throw new MesaNoDisponibleException(
-                    "La mesa " + mesa.getNumero() + " no tiene cuenta abierta");
+            throw new EstadoInvalidoException(
+                "La mesa " + mesa.getNumero() + " no tiene cuenta abierta");
         }
     }
 }
