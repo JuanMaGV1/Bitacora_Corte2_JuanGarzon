@@ -1,10 +1,11 @@
 package com.restaurante.controller;
 
-import com.restaurante.mapper.PlatoMapper;
-import com.restaurante.model.domain.Plato;
-import com.restaurante.model.dto.request.PlatoRequestDTO;
-import com.restaurante.model.dto.response.PlatoResponseDTO;
-import com.restaurante.service.PlatoService;
+import com.restaurante.controller.dto.request.PlatoRequestDTO;
+import com.restaurante.controller.dto.response.PlatoResponseDTO;
+import com.restaurante.controller.mapper.PlatoMapper;
+import com.restaurante.core.model.domain.Plato;
+import com.restaurante.core.service.PlatoService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

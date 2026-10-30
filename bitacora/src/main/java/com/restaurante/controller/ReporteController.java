@@ -1,8 +1,9 @@
 package com.restaurante.controller;
 
-import com.restaurante.model.dto.response.IngresoCategoriaDTO;
-import com.restaurante.model.dto.response.ResumenDiaDTO;
-import com.restaurante.service.ReporteService;
+import com.restaurante.controller.dto.response.IngresoCategoriaDTO;
+import com.restaurante.controller.dto.response.ResumenDiaDTO;
+import com.restaurante.core.service.ReporteService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

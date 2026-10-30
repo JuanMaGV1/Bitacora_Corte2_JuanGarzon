@@ -1,9 +1,10 @@
 package com.restaurante.persistence.entity;
 
-import com.restaurante.model.domain.EstadoReserva;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+
+import com.restaurante.core.model.domain.enums.EstadoReserva;
 
 import java.time.LocalDateTime;
 

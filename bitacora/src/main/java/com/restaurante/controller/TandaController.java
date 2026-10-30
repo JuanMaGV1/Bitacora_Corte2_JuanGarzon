@@ -1,7 +1,8 @@
 package com.restaurante.controller;
 
-import com.restaurante.model.dto.response.TandaResponseDTO;
-import com.restaurante.service.TandaService;
+import com.restaurante.controller.dto.response.TandaResponseDTO;
+import com.restaurante.core.service.TandaService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotEmpty;

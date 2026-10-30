@@ -1,13 +1,15 @@
 package com.restaurante.service.impl;
 
-import com.restaurante.exception.ConflictoException;
-import com.restaurante.exception.RecursoNoEncontradoException;
-import com.restaurante.exception.ReglaDeNegocioException;
-import com.restaurante.mapper.PlatoEntityMapper;
-import com.restaurante.model.domain.Plato;
+import com.restaurante.controller.handlers.exception.ConflictoException;
+import com.restaurante.controller.handlers.exception.RecursoNoEncontradoException;
+import com.restaurante.controller.handlers.exception.ReglaDeNegocioException;
+import com.restaurante.controller.mapper.PlatoEntityMapper;
+import com.restaurante.core.model.domain.Plato;
+import com.restaurante.core.service.impl.PlatoServiceImpl;
+import com.restaurante.core.validator.PlatoValidator;
 import com.restaurante.persistence.entity.PlatoEntity;
-import com.restaurante.repository.PlatoRepository;
-import com.restaurante.validator.PlatoValidator;
+import com.restaurante.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

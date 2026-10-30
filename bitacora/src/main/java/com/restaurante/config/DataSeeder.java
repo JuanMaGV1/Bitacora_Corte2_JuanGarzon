@@ -1,8 +1,9 @@
 package com.restaurante.config;
 
-import com.restaurante.model.domain.Rol;
+import com.restaurante.core.model.domain.enums.Rol;
 import com.restaurante.persistence.entity.UsuarioEntity;
-import com.restaurante.repository.UsuarioRepository;
+import com.restaurante.persistence.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

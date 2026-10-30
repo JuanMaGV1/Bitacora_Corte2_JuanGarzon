@@ -1,7 +1,9 @@
 package com.restaurante.validator;
 
-import com.restaurante.exception.ConflictoException;
-import com.restaurante.repository.RegistroVehiculoRepository;
+import com.restaurante.controller.handlers.exception.ConflictoException;
+import com.restaurante.core.validator.RegistroVehiculoValidator;
+import com.restaurante.persistence.repository.RegistroVehiculoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

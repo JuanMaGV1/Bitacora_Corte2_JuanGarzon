@@ -1,9 +1,10 @@
 package com.restaurante.controller;
 
-import com.restaurante.model.dto.request.LoginRequestDTO;
-import com.restaurante.model.dto.request.RegistroRequestDTO;
-import com.restaurante.model.dto.response.TokenResponseDTO;
-import com.restaurante.service.AuthService;
+import com.restaurante.controller.dto.request.LoginRequestDTO;
+import com.restaurante.controller.dto.request.RegistroRequestDTO;
+import com.restaurante.controller.dto.response.TokenResponseDTO;
+import com.restaurante.core.service.AuthService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

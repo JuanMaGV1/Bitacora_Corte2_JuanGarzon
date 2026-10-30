@@ -1,14 +1,16 @@
 package com.restaurante.service.impl;
 
-import com.restaurante.exception.ConflictoException;
-import com.restaurante.mapper.UsuarioEntityMapper;
-import com.restaurante.model.domain.Rol;
-import com.restaurante.model.dto.request.LoginRequestDTO;
-import com.restaurante.model.dto.request.RegistroRequestDTO;
-import com.restaurante.model.dto.response.TokenResponseDTO;
+import com.restaurante.config.security.JwtUtil;
+import com.restaurante.controller.dto.request.LoginRequestDTO;
+import com.restaurante.controller.dto.request.RegistroRequestDTO;
+import com.restaurante.controller.dto.response.TokenResponseDTO;
+import com.restaurante.controller.handlers.exception.ConflictoException;
+import com.restaurante.controller.mapper.UsuarioEntityMapper;
+import com.restaurante.core.model.domain.enums.Rol;
+import com.restaurante.core.service.impl.AuthServiceImpl;
 import com.restaurante.persistence.entity.UsuarioEntity;
-import com.restaurante.repository.UsuarioRepository;
-import com.restaurante.security.JwtUtil;
+import com.restaurante.persistence.repository.UsuarioRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

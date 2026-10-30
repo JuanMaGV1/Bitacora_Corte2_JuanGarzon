@@ -1,12 +1,13 @@
 package com.restaurante.controller;
 
-import com.restaurante.mapper.PedidoMapper;
-import com.restaurante.model.domain.EstadoPedido;
-import com.restaurante.model.domain.Pedido;
-import com.restaurante.model.dto.request.AgregarItemDTO;
-import com.restaurante.model.dto.request.PedidoRequestDTO;
-import com.restaurante.model.dto.response.PedidoResponseDTO;
-import com.restaurante.service.PedidoService;
+import com.restaurante.controller.dto.request.AgregarItemDTO;
+import com.restaurante.controller.dto.request.PedidoRequestDTO;
+import com.restaurante.controller.dto.response.PedidoResponseDTO;
+import com.restaurante.controller.mapper.PedidoMapper;
+import com.restaurante.core.model.domain.Pedido;
+import com.restaurante.core.model.domain.enums.EstadoPedido;
+import com.restaurante.core.service.PedidoService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

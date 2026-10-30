@@ -1,16 +1,19 @@
 package com.restaurante.service.impl;
 
-import com.restaurante.exception.EstadoInvalidoException;
-import com.restaurante.exception.RecursoNoEncontradoException;
-import com.restaurante.mapper.PedidoEntityMapper;
-import com.restaurante.model.domain.*;
+import com.restaurante.controller.handlers.exception.EstadoInvalidoException;
+import com.restaurante.controller.handlers.exception.RecursoNoEncontradoException;
+import com.restaurante.controller.mapper.PedidoEntityMapper;
+import com.restaurante.core.model.domain.*;
+import com.restaurante.core.model.domain.enums.EstadoPedido;
+import com.restaurante.core.service.CuentaService;
+import com.restaurante.core.service.PlatoService;
+import com.restaurante.core.service.impl.PedidoServiceImpl;
+import com.restaurante.core.validator.PedidoValidator;
 import com.restaurante.persistence.entity.MesaEntity;
 import com.restaurante.persistence.entity.PedidoEntity;
-import com.restaurante.repository.MesaRepository;
-import com.restaurante.repository.PedidoRepository;
-import com.restaurante.service.CuentaService;
-import com.restaurante.service.PlatoService;
-import com.restaurante.validator.PedidoValidator;
+import com.restaurante.persistence.repository.MesaRepository;
+import com.restaurante.persistence.repository.PedidoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

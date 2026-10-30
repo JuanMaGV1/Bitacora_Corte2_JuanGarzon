@@ -1,6 +1,7 @@
 package com.restaurante.persistence.entity;
 
-import com.restaurante.model.domain.EstadoMesa;
+import com.restaurante.core.model.domain.enums.EstadoMesa;
+
 import jakarta.persistence.*;
 import lombok.*;
 

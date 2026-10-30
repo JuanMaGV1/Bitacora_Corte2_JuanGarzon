@@ -1,12 +1,14 @@
 package com.restaurante.service.impl;
 
-import com.restaurante.exception.ConflictoException;
-import com.restaurante.exception.RecursoNoEncontradoException;
-import com.restaurante.mapper.IngredienteEntityMapper;
-import com.restaurante.model.domain.Ingrediente;
+import com.restaurante.controller.handlers.exception.ConflictoException;
+import com.restaurante.controller.handlers.exception.RecursoNoEncontradoException;
+import com.restaurante.controller.mapper.IngredienteEntityMapper;
+import com.restaurante.core.model.domain.Ingrediente;
+import com.restaurante.core.service.impl.IngredienteServiceImpl;
+import com.restaurante.core.validator.IngredienteValidator;
 import com.restaurante.persistence.entity.IngredienteEntity;
-import com.restaurante.repository.IngredienteRepository;
-import com.restaurante.validator.IngredienteValidator;
+import com.restaurante.persistence.repository.IngredienteRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

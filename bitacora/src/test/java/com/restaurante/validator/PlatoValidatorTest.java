@@ -1,8 +1,10 @@
 package com.restaurante.validator;
 
-import com.restaurante.exception.ConflictoException;
-import com.restaurante.exception.ReglaDeNegocioException;
-import com.restaurante.repository.PlatoRepository;
+import com.restaurante.controller.handlers.exception.ConflictoException;
+import com.restaurante.controller.handlers.exception.ReglaDeNegocioException;
+import com.restaurante.core.validator.PlatoValidator;
+import com.restaurante.persistence.repository.PlatoRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

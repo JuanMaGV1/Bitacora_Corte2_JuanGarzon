@@ -1,11 +1,12 @@
 package com.restaurante.controller;
 
-import com.restaurante.mapper.ReservaMapper;
-import com.restaurante.model.domain.EstadoReserva;
-import com.restaurante.model.domain.Reserva;
-import com.restaurante.model.dto.request.ReservaRequestDTO;
-import com.restaurante.model.dto.response.ReservaResponseDTO;
-import com.restaurante.service.ReservaService;
+import com.restaurante.controller.dto.request.ReservaRequestDTO;
+import com.restaurante.controller.dto.response.ReservaResponseDTO;
+import com.restaurante.controller.mapper.ReservaMapper;
+import com.restaurante.core.model.domain.Reserva;
+import com.restaurante.core.model.domain.enums.EstadoReserva;
+import com.restaurante.core.service.ReservaService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

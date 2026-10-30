@@ -1,10 +1,11 @@
 package com.restaurante.controller;
 
-import com.restaurante.mapper.MesaMapper;
-import com.restaurante.model.domain.Mesa;
-import com.restaurante.model.dto.request.MesaRequestDTO;
-import com.restaurante.model.dto.response.MesaResponseDTO;
-import com.restaurante.service.MesaService;
+import com.restaurante.controller.dto.request.MesaRequestDTO;
+import com.restaurante.controller.dto.response.MesaResponseDTO;
+import com.restaurante.controller.mapper.MesaMapper;
+import com.restaurante.core.model.domain.Mesa;
+import com.restaurante.core.service.MesaService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

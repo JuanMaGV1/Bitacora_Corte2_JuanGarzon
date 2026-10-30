@@ -1,9 +1,10 @@
 package com.restaurante.controller;
 
-import com.restaurante.mapper.CuentaMapper;
-import com.restaurante.model.domain.Cuenta;
-import com.restaurante.model.dto.response.CuentaResponseDTO;
-import com.restaurante.service.CuentaService;
+import com.restaurante.controller.dto.response.CuentaResponseDTO;
+import com.restaurante.controller.mapper.CuentaMapper;
+import com.restaurante.core.model.domain.Cuenta;
+import com.restaurante.core.service.CuentaService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

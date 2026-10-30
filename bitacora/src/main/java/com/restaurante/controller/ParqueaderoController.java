@@ -1,10 +1,11 @@
 package com.restaurante.controller;
 
-import com.restaurante.mapper.RegistroVehiculoMapper;
-import com.restaurante.model.domain.RegistroVehiculo;
-import com.restaurante.model.dto.request.RegistroVehiculoRequestDTO;
-import com.restaurante.model.dto.response.RegistroVehiculoResponseDTO;
-import com.restaurante.service.RegistroVehiculoService;
+import com.restaurante.controller.dto.request.RegistroVehiculoRequestDTO;
+import com.restaurante.controller.dto.response.RegistroVehiculoResponseDTO;
+import com.restaurante.controller.mapper.RegistroVehiculoMapper;
+import com.restaurante.core.model.domain.RegistroVehiculo;
+import com.restaurante.core.service.RegistroVehiculoService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
