@@ -5,14 +5,11 @@ services:
     image: mongo:7.0
     environment:
       MONGO_INITDB_DATABASE: dosw_parcial
-    # No exponemos puertos para que solo la API pueda verla
     networks:
       - sakura-net
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: juangv1/sakura-api:latest
     ports:
       - "8080:8080"
     depends_on:
