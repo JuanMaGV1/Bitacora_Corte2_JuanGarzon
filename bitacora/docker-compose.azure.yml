@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7.0
+    environment:
+      MONGO_INITDB_DATABASE: dosw_parcial
+    # No exponemos puertos para que solo la API pueda verla
+    networks:
+      - sakura-net
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGODB_URI: mongodb://mongo:27017/dosw_parcial
+      JWT_SECRET: VGVzdFNlY3JldEtleVRlc3RTZWNyZXRLZXlUZXN0U2VjcmV0S2V5VGVzdFNlY3JldEtleQ==
+    networks:
+      - sakura-net
+
+networks:
+  sakura-net:
+    driver: bridge
