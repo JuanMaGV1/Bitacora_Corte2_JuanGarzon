@@ -1,4 +1,4 @@
-name: CI — Build · Test · Docker Push
+name: CI — Build · Test · Docker Push · Deploy Azure
 
 on:
   push:
@@ -12,10 +12,10 @@ env:
 jobs:
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 1: Compilar, testear y publicar reportes
+  # JOB 1: Compilar, testear y publicar reportes (Se mantiene igual)
   # ─────────────────────────────────────────────────────────────
   test:
-    name: 🧪 Compilar y probar
+    name: Compilar y probar
     runs-on: ubuntu-latest
 
     steps:
@@ -50,10 +50,10 @@ jobs:
           if-no-files-found: ignore
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 2: Construir imagen Docker y publicar en Docker Hub
+  # JOB 2: Construir imagen Docker y publicar en Docker Hub (Se mantiene igual)
   # ─────────────────────────────────────────────────────────────
   build-and-push:
-    name: 🐳 Construir y publicar imagen Docker
+    name: Construir y publicar imagen Docker
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -94,7 +94,7 @@ jobs:
 
       - name: Resumen del despliegue
         run: |
-          echo "## ✅ Imagen publicada" >> $GITHUB_STEP_SUMMARY
+          echo "## Imagen publicada" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tags generados:**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
@@ -102,3 +102,20 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Repositorio:** https://hub.docker.com/r/${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3: NUEVO - Notificar a Azure para actualizar el contenedor
+  # ─────────────────────────────────────────────────────────────
+  deploy-azure:
+    name: Actualizar Azure Web App
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Solo despliega si es push a la rama main
+
+    steps:
+      - name: Desplegar en Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'sakura-sushi-api-juan'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ env.IMAGE_NAME }}:latest
