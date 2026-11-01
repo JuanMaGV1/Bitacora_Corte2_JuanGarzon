@@ -1,4 +1,4 @@
-name: CI — Build · Test · Docker Push
+name: CI — Build · Test · Docker Push · Deploy Azure
 
 on:
   push:
@@ -91,3 +91,24 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3: Desplegar en Azure Web App (Contenedor Único)
+  # ─────────────────────────────────────────────────────────────
+  deploy-azure:
+    name: 🚀 Actualizar Azure Web App
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Solo despliega si es push a la rama main
+
+    steps:
+      - name: Login en Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+
+      - name: Desplegar contenedor en Azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'sakura-sushi-api-juan' # Nombre exacto de tu App Service
+          images: ${{ env.IMAGE_NAME }}:latest # Le decimos a Azure que use la imagen recién subida
